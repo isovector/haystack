@@ -1,3 +1,5 @@
+{-# LANGUAGE RankNTypes #-}
+
 module Haystack.Game where
 
 import Control.Monad (liftM2)
@@ -10,7 +12,7 @@ data Game = Game { name :: String
                  , metadata :: GameData
                  } deriving (Eq, Show, Read)
 
-data Category = Popular | NewRelease | ForgottenGem deriving (Eq, Show, Read)
+data Category = Popular | NewRelease | Forgotten deriving (Eq, Show, Read)
 data GameData = GameData { category :: Maybe Category
                          , isFamily :: Maybe Bool
                          , isParty :: Maybe Bool
@@ -22,16 +24,12 @@ data GameData = GameData { category :: Maybe Category
 
 type GamePref = GameData
 
-
-score:: GamePref -> GameData -> Maybe Int
-score pref game = foldlM (partialLift (+)) 0 subs
-  where check :: Eq a => (GameData -> Maybe a) -> Maybe Int
-        check f = reduce 1 (==) (f pref) (f game)
-
-        reduce :: Int -> (a -> a -> Bool) -> Maybe a -> Maybe a -> Maybe Int
-        reduce v f (Just a) (Just b) = if f a b then Just v else Nothing
-        reduce _ _ _ _ = Just 0
-
+over :: (forall b. Eq b => Maybe b -> Maybe b -> a)
+     -> GamePref
+     -> GameData
+     -> [a]
+over scoreBy pref game = subs
+  where check f  = scoreBy (f pref) (f game)
         subs = [ check category
                , check isFamily
                , check isParty
@@ -40,6 +38,12 @@ score pref game = foldlM (partialLift (+)) 0 subs
                , check is2Player
                , check is3Player
                ]
+
+score :: GamePref -> GameData -> Maybe Int
+score pref game = foldlM (partialLift (+)) 0 $ over reduce pref game
+  where reduce (Just a) (Just b) = Just $ if a == b then 1 else 0
+        reduce _ _ = Just 0
+
 
 scoreGames :: GamePref -> [Game] -> [(Game, Int)]
 scoreGames pref games = catPairs

@@ -5,6 +5,8 @@ module Main where
 import Haystack.Game
 import Haystack.User
 
+empty = makeData (Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing)
+
 makeData (a, b, c, d, e, f, g) = GameData { category = a
                                           , isFamily = b
                                           , isParty = c
@@ -23,11 +25,21 @@ twister = Game "Twister" $ makeData ( Just Popular
                                     , Just True
                                     )
 
+bsgtbg = Game "BSGTBG" $ makeData ( Just Forgotten
+                                  , Just False
+                                  , Just False
+                                  , Just True
+                                  , Just True
+                                  , Just False
+                                  , Just True
+                                  )
+
 
 testUser = User { username = "Test User"
-                , prefs = GameData { category = Just Popular
-                                 , isFamily = Just True
-                                 , isParty = Just True
+                , mustBe = empty
+                , prefs = GameData { category = Nothing
+                                 , isFamily = Nothing
+                                 , isParty = Nothing
                                  , isAbstract = Nothing
                                  , isStrategy = Nothing
                                  , is2Player = Nothing
@@ -36,8 +48,8 @@ testUser = User { username = "Test User"
                 , owned = []
                 }
 
-userScore = score $ prefs testUser
+userScore = scoreGames $ prefs testUser
 
-main = putStrLn . show . userScore $ metadata twister
+main = putStrLn . show . userScore $ [twister, bsgtbg]
 
 
