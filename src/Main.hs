@@ -37,10 +37,10 @@ bsgtbg = Game "BSGTBG" $ makeData ( Just Forgotten
 
 testUser = User { username = "Test User"
                 , mustBe = empty
-                , prefs = GameData { category = Nothing
+                , prefs = GameData { category = Just Popular
                                  , isFamily = Nothing
                                  , isParty = Nothing
-                                 , isAbstract = Nothing
+                                 , isAbstract = Just False
                                  , isStrategy = Nothing
                                  , is2Player = Nothing
                                  , is3Player = Just True
@@ -50,6 +50,6 @@ testUser = User { username = "Test User"
 
 userScore = scoreGames $ prefs testUser
 
-main = putStrLn . show . userScore $ [twister, bsgtbg]
+main = putStrLn . show . recommended [twister, bsgtbg] $ testUser
 
 

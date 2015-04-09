@@ -44,6 +44,11 @@ score pref game = foldlM (partialLift (+)) 0 $ over reduce pref game
   where reduce (Just a) (Just b) = Just $ if a == b then 1 else 0
         reduce _ _ = Just 0
 
+filtered :: GamePref -> GameData -> Bool
+filtered pref game = all (==True) $ over reduce pref game
+  where reduce (Just a) (Just b) = if a == b then True else False
+        reduce _ _ = True
+
 
 scoreGames :: GamePref -> [Game] -> [(Game, Int)]
 scoreGames pref games = catPairs
