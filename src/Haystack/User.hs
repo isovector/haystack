@@ -7,4 +7,3 @@ data User = User { username :: String
                  , prefs :: GamePref
                  , owned :: [Game] }
 
-
