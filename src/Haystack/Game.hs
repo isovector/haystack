@@ -1,5 +1,3 @@
-{-# LANGUAGE RankNTypes #-}
-
 module Haystack.Game where
 
 import Control.Monad (liftM2)
@@ -24,12 +22,13 @@ data GameData = GameData { category :: Maybe Category
 
 type GamePref = GameData
 
-over :: (forall b. Eq b => Maybe b -> Maybe b -> a)
-     -> GamePref
-     -> GameData
-     -> [a]
-over scoreBy pref game = subs
+over :: a -> a -> a -> GamePref -> GameData -> [a]
+over same diff missing pref game = subs
   where check f  = scoreBy (f pref) (f game)
+
+        scoreBy (Just a) (Just b) = if a == b then same else diff
+        scoreBy _ _ = missing
+
         subs = [ check category
                , check isFamily
                , check isParty
@@ -39,24 +38,14 @@ over scoreBy pref game = subs
                , check is3Player
                ]
 
-score :: GamePref -> GameData -> Maybe Int
-score pref game = foldlM (partialLift (+)) 0 $ over reduce pref game
-  where reduce (Just a) (Just b) = Just $ if a == b then 1 else 0
-        reduce _ _ = Just 0
+score :: GamePref -> GameData -> Int
+score pref game = foldl1 (+) $ over 1 0 0 pref game
 
 filtered :: GamePref -> GameData -> Bool
-filtered pref game = all (==True) $ over reduce pref game
-  where reduce (Just a) (Just b) = if a == b then True else False
-        reduce _ _ = True
+filtered pref game = foldl1 (&&) $ over True False True pref game
 
 
 scoreGames :: GamePref -> [Game] -> [(Game, Int)]
-scoreGames pref games = catPairs
-                      . pmap (id, score pref . metadata)
+scoreGames pref games = pmap (id, score pref . metadata)
                       $ zip games games
-  where catPairs :: [(a, Maybe b)] -> [(a, b)]
-        catPairs = catMaybes . map extract
 
-        extract :: (a, Maybe b) -> Maybe (a, b)
-        extract (a, Just b)  = Just (a, b)
-        extract (_, Nothing) = Nothing
