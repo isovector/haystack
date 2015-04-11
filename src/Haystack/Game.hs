@@ -22,34 +22,48 @@ data GameData = GameData { category :: Category
                          , is3Player :: Bool
                          } deriving (Eq, Show, Read, Typeable)
 
-type GamePref = GameData
-
-{-
-over :: a -> a -> a -> GamePref -> GameData -> [a]
-over same diff missing pref game = subs
-  where check f  = scoreBy (f pref) (f game)
-
-        scoreBy (Just a) (Just b) = if a == b then same else diff
-        scoreBy _ _ = missing
-
-        subs = [ check category
-               , check isFamily
-               , check isParty
-               , check isAbstract
-               , check isStrategy
-               , check is2Player
-               , check is3Player
-               ]
+data GamePref = GamePref { likesPopular :: Int
+                         , likesNewRelease :: Int
+                         , likesForgotten :: Int
+                         , likesFamily :: Int
+                         , likesParty :: Int
+                         , likesAbstract :: Int
+                         , likesStrategy :: Int
+                         , likes2Player :: Int
+                         , likes3Player :: Int
+                         } deriving (Eq, Show, Read, Typeable)
 
 score :: GamePref -> GameData -> Int
-score pref game = foldl1 (+) $ over 1 0 0 pref game
-
-filtered :: GamePref -> GameData -> Bool
-filtered pref game = foldl1 (&&) $ over True False True pref game
+score pref game =
+    foldl1 (+) $
+      zipWith aspectScore
+          [ likesPopular
+          , likesNewRelease
+          , likesForgotten
+          , likesFamily
+          , likesParty
+          , likesAbstract
+          , likesStrategy
+          , likes2Player
+          , likes3Player
+          ]
+          [ isCategory Popular
+          , isCategory NewRelease
+          , isCategory Forgotten
+          , isFamily
+          , isParty
+          , isAbstract
+          , isStrategy
+          , is2Player
+          , is3Player
+          ]
+  where isCategory c g = c == category g
+        aspectScore f b = let x = f pref
+                           in if b game then x
+                                   else 5 - x
 
 
 scoreGames :: GamePref -> [Game] -> [(Game, Int)]
 scoreGames pref games = pmap (id, score pref . metadata)
                       $ zip games games
--}
 

@@ -8,8 +8,6 @@ import Haystack.Web.Routes
 
 import Happstack.Server
 
-empty = makeData (Popular, False, False, False, False, False, False)
-
 makeData (a, b, c, d, e, f, g)
     = GameData { category = a
                , isFamily = b
@@ -42,18 +40,13 @@ bsgtbg = Game "BSGTBG"
 
 testUser
     = User { username = "Test User"
-           , mustBe = empty
            , owned = []
-           , prefs = GameData { category = Popular
-                              , isFamily = False
-                              , isParty = False
-                              , isAbstract = False
-                              , isStrategy = False
-                              , is2Player = False
-                              , is3Player = True
-                              }}
+           , prefs = GamePref 5 1 1 5 5 1 1 5 1
+           }
 
-main :: IO ()
-main = simpleHTTP nullConf $
+nain :: IO ()
+nain = simpleHTTP nullConf $
     do decodeBody (defaultBodyPolicy "/tmp/" 4096 4096 4096)
        routes
+
+main = mapM_ (putStrLn . show) $ recommended [twister, bsgtbg] testUser

@@ -16,6 +16,7 @@ $(deriveSafeCopy 0 'base ''Category) -- '
 $(deriveSafeCopy 0 'base ''Database) -- '
 $(deriveSafeCopy 0 'base ''Game)     -- '
 $(deriveSafeCopy 0 'base ''GameData) -- '
+$(deriveSafeCopy 0 'base ''GamePref) -- '
 $(deriveSafeCopy 0 'base ''User)     -- '
 
 
