@@ -1,13 +1,14 @@
 {-# LANGUAGE TypeFamilies, DeriveDataTypeable, TemplateHaskell #-}
 module Haystack.Database where
 
-import Control.Monad.Reader (ask)
+import Control.Monad.Reader (ask, ReaderT)
 import Control.Monad.State  (get, put)
 import Data.Acid
 import Data.SafeCopy
 import Data.Typeable
 import Haystack.Game
 import Haystack.User
+import Happstack.Server (ServerPartT)
 
 
 data Database = Database [Game] [User] deriving (Typeable)
@@ -19,6 +20,7 @@ $(deriveSafeCopy 0 'base ''GameData) -- '
 $(deriveSafeCopy 0 'base ''GamePref) -- '
 $(deriveSafeCopy 0 'base ''User)     -- '
 
+type App = ReaderT (AcidState Database) (ServerPartT IO)
 
 addGame :: Game -> Update Database ()
 addGame game = do Database games users <- get

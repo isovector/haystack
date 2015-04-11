@@ -1,5 +1,6 @@
 module Main where
 
+import Control.Monad.Reader (runReaderT)
 import Data.Acid
 import Haystack.Database
 import Haystack.Game
@@ -44,9 +45,11 @@ testUser
            , prefs = GamePref 5 1 1 5 5 1 1 5 1
            }
 
-nain :: IO ()
-nain = simpleHTTP nullConf $
-    do decodeBody (defaultBodyPolicy "/tmp/" 4096 4096 4096)
-       routes
-
-main = mapM_ (putStrLn . show) $ recommended [twister, bsgtbg] testUser
+main :: IO ()
+main =
+    do database <- openLocalState $ Database [] []
+       -- update database (AddGame twister)
+       -- update database (AddGame bsgtbg)
+       simpleHTTP nullConf $ do
+             decodeBody (defaultBodyPolicy "/tmp/" 4096 4096 4096)
+             runReaderT routes database

@@ -2,6 +2,7 @@
 module Haystack.Web.Website where
 
 import Haystack.Game
+import Haystack.Database
 import Control.Applicative ((<$>), optional)
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
@@ -15,7 +16,7 @@ import qualified Text.Blaze.Html5.Attributes as A
 import Haystack.Web.Template
 
 
-homePage :: ServerPart Response
+homePage :: App Response
 homePage =
     ok $ template "home page" $ do
            H.h1 "Hello!"

@@ -2,9 +2,14 @@
 {-# LANGUAGE OverloadedStrings, ScopedTypeVariables #-}
 module Haystack.Web.Preferences where
 
+import Control.Monad.IO.Class (liftIO)
+import Debug.Trace (trace)
 import Haystack.Game
+import Haystack.Database
 import Control.Applicative ((<$>))
 import Control.Monad (forM_, mapM_, msum)
+import Control.Monad.Reader (ask, ReaderT)
+import Data.Acid
 import Data.Text (Text)
 import Happstack.Server
 import Text.Blaze.Html5 (Html, (!), a, form, input, p, toHtml, label, option, select)
@@ -54,8 +59,12 @@ runForm submit contents =
              input ! type_ "submit" ! value submit
 
 
+showTrace :: Show a => a -> a
+showTrace = trace =<< show
 
-prefPage :: ServerPart Response
+
+
+prefPage :: App Response
 prefPage = msum [ viewForm, processForm ]
   where
       viewForm =
@@ -64,14 +73,19 @@ prefPage = msum [ viewForm, processForm ]
                runForm "No Preferences" noPrefTable
                runForm "Submit!" prefTable
 
+      processForm :: App Response
       processForm =
           do method POST
+             db <- ask
+             (games, _) <- liftIO $ query db (GetState)
              prefs <- sequence $ map (runText . fst) prefMap
              ok $ template "form" $ do
                  H.p "You said:"
                  forM_ prefs output
+                 mapM_ printIt games
 
       runText idx = do rating <- lookText idx
                        return (idx, rating)
 
       output (idx, val) = H.p $ toHtml (idx ++ ":" ++ show val)
+      printIt game = H.p $ toHtml (show game)
