@@ -1,10 +1,12 @@
-{-# LANGUAGE OverloadedStrings, ScopedTypeVariables #-}
 module Main where
 
 import Data.Acid
 import Haystack.Database
 import Haystack.Game
 import Haystack.User
+import Haystack.Web.Routes
+
+import Happstack.Lite
 
 empty = makeData (Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing)
 
@@ -53,9 +55,10 @@ testUser
 
 userScore = scoreGames $ prefs testUser
 
-main :: IO ()
-main = do database <- openLocalState $ Database [] []
+nain :: IO ()
+nain = do database <- openLocalState $ Database [] []
           (games, users) <- query database (GetState)
           mapM_ (putStrLn . show) games
 
-
+main :: IO ()
+main = serve Nothing routes

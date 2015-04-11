@@ -8,7 +8,7 @@ import Data.Typeable
 import Utils         (pmap, partialLift)
 
 
-data Game = Game { name :: String
+data Game = Game { gameName :: String
                  , metadata :: GameData
                  } deriving (Eq, Show, Read, Typeable)
 

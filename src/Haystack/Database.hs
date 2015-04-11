@@ -28,3 +28,4 @@ getState = do Database games users <- ask
               return (games, users)
 
 $(makeAcidic ''Database ['addGame, 'getState])
+
