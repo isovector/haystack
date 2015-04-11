@@ -3,7 +3,8 @@
 module Haystack.Web.Preferences where
 
 import Haystack.Game
-import Control.Applicative ((<$>), optional)
+import Control.Applicative ((<$>))
+import Control.Monad (mapM_)
 import Data.Text (Text)
 import Data.Text.Lazy (unpack)
 import Happstack.Lite
@@ -15,8 +16,14 @@ import qualified Text.Blaze.Html5.Attributes as A
 import Haystack.Web.Template
 
 
-optionOf :: String -> H.AttributeValue -> Html
-optionOf s v = option ! value v $ H.string s
+prefRow :: String -> H.AttributeValue -> Html
+prefRow s v = H.tr $ do
+                H.td ! A.style "text-align: right" $ label $ H.string (s ++ ":")
+                H.td                               $ mapM_ prefRadio [1..5]
+  where prefRadio :: Int -> Html
+        prefRadio i = input ! type_ "radio" ! name v ! value (H.stringValue $ show i)
+
+
 
 prefPage :: ServerPart Response
 prefPage = msum [ viewForm, processForm ]
@@ -26,10 +33,9 @@ prefPage = msum [ viewForm, processForm ]
         do method GET
            ok $ template "form" $
               form ! action "/form" ! enctype "multipart/form-data" ! A.method "POST" $ do
-                select ! name "category" $ do
-                    optionOf "Popular" "Popular"
-                    optionOf "New Release" "NewRelease"
-                    optionOf "Forgotten Gem" "ForgottenGem"
+                H.table $ do
+                    prefRow "Popular" "Popular"
+                    prefRow "Forgotten Gems" "ForgottenGem"
                 label ! A.for "msg" $ "Say something clever"
                 input ! type_ "text" ! A.id "msg" ! name "msg"
                 input ! type_ "submit" ! value "Say it!"
