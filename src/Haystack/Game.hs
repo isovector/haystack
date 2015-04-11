@@ -13,17 +13,18 @@ data Game = Game { gameName :: String
                  } deriving (Eq, Show, Read, Typeable)
 
 data Category = Popular | NewRelease | Forgotten deriving (Eq, Show, Read, Typeable)
-data GameData = GameData { category :: Maybe Category
-                         , isFamily :: Maybe Bool
-                         , isParty :: Maybe Bool
-                         , isAbstract :: Maybe Bool
-                         , isStrategy :: Maybe Bool
-                         , is2Player :: Maybe Bool
-                         , is3Player :: Maybe Bool
+data GameData = GameData { category :: Category
+                         , isFamily :: Bool
+                         , isParty :: Bool
+                         , isAbstract :: Bool
+                         , isStrategy :: Bool
+                         , is2Player :: Bool
+                         , is3Player :: Bool
                          } deriving (Eq, Show, Read, Typeable)
 
 type GamePref = GameData
 
+{-
 over :: a -> a -> a -> GamePref -> GameData -> [a]
 over same diff missing pref game = subs
   where check f  = scoreBy (f pref) (f game)
@@ -50,4 +51,5 @@ filtered pref game = foldl1 (&&) $ over True False True pref game
 scoreGames :: GamePref -> [Game] -> [(Game, Int)]
 scoreGames pref games = pmap (id, score pref . metadata)
                       $ zip games games
+-}
 

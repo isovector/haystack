@@ -2,7 +2,7 @@
 module Haystack.Web.Template where
 
 import Data.Text (Text)
-import Happstack.Lite
+import Happstack.Server
 import Text.Blaze.Html5 (Html, (!), a, form, input, p, toHtml, label)
 import Text.Blaze.Html5.Attributes (action, enctype, href, name, size, type_, value)
 import qualified Text.Blaze.Html5 as H

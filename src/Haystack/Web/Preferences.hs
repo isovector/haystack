@@ -4,9 +4,9 @@ module Haystack.Web.Preferences where
 
 import Haystack.Game
 import Control.Applicative ((<$>))
-import Control.Monad (forM_, mapM_)
+import Control.Monad (forM_, mapM_, msum)
 import Data.Text (Text)
-import Happstack.Lite
+import Happstack.Server
 import Text.Blaze.Html5 (Html, (!), a, form, input, p, toHtml, label, option, select)
 import Text.Blaze.Html5.Attributes (action, enctype, href, name, size, type_, value)
 import qualified Text.Blaze.Html5 as H
@@ -74,5 +74,4 @@ prefPage = msum [ viewForm, processForm ]
       runText idx = do rating <- lookText idx
                        return (idx, rating)
 
-      output (idx, val) = do H.p $ toHtml idx
-                             H.p $ toHtml $ show val
+      output (idx, val) = H.p $ toHtml (idx ++ ":" ++ show val)

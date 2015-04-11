@@ -6,9 +6,9 @@ import Haystack.Game
 import Haystack.User
 import Haystack.Web.Routes
 
-import Happstack.Lite
+import Happstack.Server
 
-empty = makeData (Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing)
+empty = makeData (Popular, False, False, False, False, False, False)
 
 makeData (a, b, c, d, e, f, g)
     = GameData { category = a
@@ -21,44 +21,39 @@ makeData (a, b, c, d, e, f, g)
                }
 
 twister = Game "Twister"
-        $ makeData ( Just Popular
-                   , Just True
-                   , Just True
-                   , Just False
-                   , Just False
-                   , Just True
-                   , Just True
+        $ makeData ( Popular
+                   , True
+                   , True
+                   , False
+                   , False
+                   , True
+                   , True
                    )
 
 bsgtbg = Game "BSGTBG"
-       $ makeData ( Just Forgotten
-                  , Just False
-                  , Just False
-                  , Just True
-                  , Just True
-                  , Just False
-                  , Just True
+       $ makeData ( Forgotten
+                  , False
+                  , False
+                  , True
+                  , True
+                  , False
+                  , True
                   )
 
 testUser
     = User { username = "Test User"
            , mustBe = empty
            , owned = []
-           , prefs = GameData { category = Just Popular
-                              , isFamily = Nothing
-                              , isParty = Nothing
-                              , isAbstract = Just False
-                              , isStrategy = Nothing
-                              , is2Player = Nothing
-                              , is3Player = Just True
+           , prefs = GameData { category = Popular
+                              , isFamily = False
+                              , isParty = False
+                              , isAbstract = False
+                              , isStrategy = False
+                              , is2Player = False
+                              , is3Player = True
                               }}
 
-userScore = scoreGames $ prefs testUser
-
-nain :: IO ()
-nain = do database <- openLocalState $ Database [] []
-          (games, users) <- query database (GetState)
-          mapM_ (putStrLn . show) games
-
 main :: IO ()
-main = serve Nothing routes
+main = simpleHTTP nullConf $
+    do decodeBody (defaultBodyPolicy "/tmp/" 4096 4096 4096)
+       routes
