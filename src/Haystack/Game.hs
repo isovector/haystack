@@ -3,9 +3,9 @@ module Haystack.Game where
 
 import Control.Monad (liftM2)
 import Data.Foldable (foldlM)
-import Data.Maybe (catMaybes)
+import Data.Maybe    (catMaybes)
 import Data.Typeable
-import Utils (pmap, partialLift)
+import Utils         (pmap, partialLift)
 
 
 data Game = Game { name :: String
