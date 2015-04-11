@@ -1,16 +1,18 @@
+{-# LANGUAGE DeriveDataTypeable #-}
 module Haystack.Game where
 
 import Control.Monad (liftM2)
 import Data.Foldable (foldlM)
 import Data.Maybe (catMaybes)
+import Data.Typeable
 import Utils (pmap, partialLift)
 
 
 data Game = Game { name :: String
                  , metadata :: GameData
-                 } deriving (Eq, Show, Read)
+                 } deriving (Eq, Show, Read, Typeable)
 
-data Category = Popular | NewRelease | Forgotten deriving (Eq, Show, Read)
+data Category = Popular | NewRelease | Forgotten deriving (Eq, Show, Read, Typeable)
 data GameData = GameData { category :: Maybe Category
                          , isFamily :: Maybe Bool
                          , isParty :: Maybe Bool
@@ -18,7 +20,7 @@ data GameData = GameData { category :: Maybe Category
                          , isStrategy :: Maybe Bool
                          , is2Player :: Maybe Bool
                          , is3Player :: Maybe Bool
-                         } deriving (Eq, Show, Read)
+                         } deriving (Eq, Show, Read, Typeable)
 
 type GamePref = GameData
 

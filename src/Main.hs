@@ -1,7 +1,8 @@
 {-# LANGUAGE OverloadedStrings, ScopedTypeVariables #-}
-
 module Main where
 
+import Data.Acid
+import Haystack.Database
 import Haystack.Game
 import Haystack.User
 
@@ -50,6 +51,9 @@ testUser = User { username = "Test User"
 
 userScore = scoreGames $ prefs testUser
 
-main = putStrLn . show . recommended [twister, bsgtbg] $ testUser
+main :: IO ()
+main = do database <- openLocalState $ Database [] []
+          (games, users) <- query database (GetState)
+          mapM_ (putStrLn . show) games
 
 
