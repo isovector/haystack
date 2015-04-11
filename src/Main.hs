@@ -42,7 +42,7 @@ bsgtbg = Game "BSGTBG"
 testUser
     = User { username = "Test User"
            , owned = []
-           , prefs = GamePref 5 1 1 5 5 1 1 5 1
+           , prefs = GamePref 4 0 0 4 4 0 0 4 0
            }
 
 main :: IO ()

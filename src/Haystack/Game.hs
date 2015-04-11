@@ -60,7 +60,7 @@ score pref game =
   where isCategory c g = c == category g
         aspectScore f b = let x = f pref
                            in if b game then x
-                                   else 5 - x
+                                   else  4 - x
 
 
 scoreGames :: GamePref -> [Game] -> [(Game, Int)]

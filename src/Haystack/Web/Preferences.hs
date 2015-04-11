@@ -37,14 +37,14 @@ noPrefTable = forM_ prefMap noPrefRow
   where noPrefRow (v, _) = input
                          ! type_ "hidden"
                          ! name (H.stringValue v)
-                         ! value "3"
+                         ! value "2"
 
 prefTable :: Html
 prefTable = H.table $ forM_ prefMap prefRow
   where
       prefRow (v, s) = H.tr $ do
           H.td ! A.style "text-align: right" $ label $ H.string (s ++ ":")
-          H.td                               $ mapM_ prefRadio [1..5]
+          H.td                               $ mapM_ prefRadio [0..4]
         where prefRadio i = input
                           ! type_ "radio"
                           ! name (H.stringValue v)
