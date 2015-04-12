@@ -6,11 +6,13 @@ import Control.Monad.IO.Class (liftIO)
 import Debug.Trace (trace)
 import Haystack.Game
 import Haystack.Database
-import Control.Applicative ((<$>))
+import Control.Applicative ((<$>), optional)
 import Control.Monad (forM_, mapM_, msum)
 import Control.Monad.Reader (ask, ReaderT)
 import Data.Acid
+import Data.Maybe (fromMaybe)
 import Data.Text (Text)
+import Data.Text.Lazy (unpack)
 import Happstack.Server
 import Text.Blaze.Html5 (Html, (!), a, form, input, p, toHtml, label, option, select)
 import Text.Blaze.Html5.Attributes (action, enctype, href, name, size, type_, value)
@@ -18,6 +20,7 @@ import qualified Text.Blaze.Html5 as H
 import qualified Text.Blaze.Html5.Attributes as A
 
 import Haystack.Web.Template
+
 
 prefMap :: [(String, String)]
 prefMap = [ ("popular", "Popular")
@@ -31,13 +34,6 @@ prefMap = [ ("popular", "Popular")
           , ("player3", "3+ Player Games")
           ]
 
-
-noPrefTable :: Html
-noPrefTable = forM_ prefMap noPrefRow
-  where noPrefRow (v, _) = input
-                         ! type_ "hidden"
-                         ! name (H.stringValue v)
-                         ! value "2"
 
 prefTable :: Html
 prefTable = H.table $ forM_ prefMap prefRow
@@ -59,33 +55,42 @@ runForm submit contents =
              input ! type_ "submit" ! value submit
 
 
-showTrace :: Show a => a -> a
-showTrace = trace =<< show
-
-
-
 prefPage :: App Response
 prefPage = msum [ viewForm, processForm ]
   where
       viewForm =
           do method GET
              ok $ template "form" $ do
-               runForm "No Preferences" noPrefTable
+               runForm "No Preferences" ""
                runForm "Submit!" prefTable
 
-      processForm :: App Response
       processForm =
           do method POST
              db <- ask
              (games, _) <- liftIO $ query db (GetState)
-             prefs <- sequence $ map (runText . fst) prefMap
+             formData <- sequence $ map (runText . fst) prefMap
+             let prefs = buildPref formData
+
              ok $ template "form" $ do
                  H.p "You said:"
-                 forM_ prefs output
+                 printIt prefs
                  mapM_ printIt games
 
-      runText idx = do rating <- lookText idx
-                       return (idx, rating)
+      buildPref prefs =
+          GamePref { likesPopular    = get "popular"
+                   , likesNewRelease = get "new"
+                   , likesForgotten  = get "gems"
+                   , likesFamily     = get "family"
+                   , likesParty      = get "party"
+                   , likesAbstract   = get "abstract"
+                   , likesStrategy   = get "strategy"
+                   , likes2Player    = get "player2"
+                   , likes3Player    = get "player3"
+                   }
+        where get x = fromMaybe 2 $ lookup x prefs
 
-      output (idx, val) = H.p $ toHtml (idx ++ ":" ++ show val)
+      runText idx = do formVal <- optional $ lookText idx
+                       let rating = fmap (read . unpack) formVal
+                       return (idx, fromMaybe 2 rating)
+
       printIt game = H.p $ toHtml (show game)
