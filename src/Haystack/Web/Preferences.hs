@@ -23,15 +23,15 @@ import Haystack.Web.Template
 
 
 prefMap :: [(String, String)]
-prefMap = [ ("popular", "Popular")
-          , ("gems", "Forgotten Gems")
-          , ("new", "New Releases")
-          , ("family", "Family Games")
-          , ("party", "Party Games")
+prefMap = [ ("popular",  "Popular")
+          , ("gems",     "Forgotten Gems")
+          , ("new",      "New Releases")
+          , ("family",   "Family Games")
+          , ("party",    "Party Games")
           , ("abstract", "Abstract Games")
           , ("strategy", "Themed Strategy Games")
-          , ("player2", "2 Player Games")
-          , ("player3", "3+ Player Games")
+          , ("player2",  "2 Player Games")
+          , ("player3",  "3+ Player Games")
           ]
 
 
@@ -40,7 +40,9 @@ prefTable = H.table $ forM_ prefMap prefRow
   where
       prefRow (v, s) = H.tr $ do
           H.td ! A.style "text-align: right" $ label $ H.string (s ++ ":")
-          H.td                               $ mapM_ prefRadio [0..4]
+          H.td                               $ do "hate"
+                                                  mapM_ prefRadio [0..4]
+                                                  "love"
         where prefRadio i = input
                           ! type_ "radio"
                           ! name (H.stringValue v)
@@ -73,8 +75,7 @@ prefPage = msum [ viewForm, processForm ]
 
              ok $ template "form" $ do
                  H.p "You said:"
-                 printIt prefs
-                 mapM_ printIt games
+                 mapM_ (printScores prefs) games
 
       buildPref prefs =
           GamePref { likesPopular    = get "popular"
@@ -93,4 +94,10 @@ prefPage = msum [ viewForm, processForm ]
                        let rating = fmap (read . unpack) formVal
                        return (idx, fromMaybe 2 rating)
 
-      printIt game = H.p $ toHtml (show game)
+      printScores pref game =
+          H.p $ do
+              toHtml $ gameName game
+              H.br
+              toHtml (show . score pref $ metadata game)
+
+
