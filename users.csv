@@ -1,3 +1,3 @@
 name,last,first,username,company,ship1,ship2,city,state,postalcode,country,email,active
-Sandy Maguire,Maguire,Sandy,isovector,Google,123 Fake,,Somewhere,BC,N2L6N6,Canada,sandy@sandymaguire.me,x
-Brian Finifter,Finifter,Brian,brian,Gamebox,?,,LA,CA,12345,US,brian@brian.com,x
+Sandy Maguire,Maguire,Sandy,isovector,Google,123 Fake,"",Somewhere,BC,N2L6N6,Canada,sandy@sandymaguire.me,X
+Brian Finifter,Finifter,Brian,brian,Gamebox,?,"",LA,CA,12345,US,brian@brian.com,X

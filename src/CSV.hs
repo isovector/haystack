@@ -31,7 +31,7 @@ columnVals csv col f = sequence . map (column csv col f) $ rows csv
 
 rowWhere :: CSV a -> String -> (String -> Bool) -> Maybe [String]
 rowWhere csv col p = find go $ rows csv
-  where go = maybe False p . column csv col id
+  where go = maybe False p . column csv col asString
 
 
 parseCSV :: String -> CSV a
@@ -47,5 +47,7 @@ asInt :: String -> Int
 asInt = read
 
 asString :: String -> String
-asString = id
+asString s = case s of
+               "\"\"" -> ""
+               x -> x
 
