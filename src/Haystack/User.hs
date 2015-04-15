@@ -1,7 +1,8 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 module Haystack.User where
 
-import Data.List ((\\))
+import Data.List ((\\), sortBy)
+import Data.Ord (comparing)
 import Data.Typeable
 import Haystack.Game
 import Utils (unwrapPair)
@@ -14,8 +15,9 @@ data User = User { username :: String
                  , owned :: [String] } deriving (Eq, Show, Typeable)
 
 recommended :: [Game] -> User -> [(Game, Int)]
-recommended games u = scoreGames (prefs u)
-                    $ games -- \\ (owned u)
+recommended games u = sortBy (flip $ comparing snd)
+                    . scoreGames (prefs u)
+                    $ filter (flip notElem (owned u) . gameName) games
 
 getUserRow :: CSV a -> String -> Maybe [String]
 getUserRow csv name = rowWhere csv "username" (name ==)
