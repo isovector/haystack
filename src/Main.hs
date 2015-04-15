@@ -12,7 +12,7 @@ import Control.Applicative ((<$>))
 import Control.Monad (ap)
 import Control.Monad.Reader (runReaderT)
 import Data.Acid
-import Data.Maybe (fromMaybe)
+import Data.Maybe (fromMaybe, isJust)
 import Haystack.Database
 import Haystack.Game
 import Haystack.User
@@ -27,39 +27,30 @@ import Happstack.Server
 type Inventory = (Game, Int)
 type UserRank = (User, (Game, Int))
 
-buildQuotas :: [Game] -> [Inventory]
-buildQuotas = ap zip (map inventory) . filter ((> 0) . inventory)
-
-into :: [(a, [b])] -> [(a, b)]
-into x = concat $ map (\(a, bs) -> map ((,) a) bs) x
-
-updateWith :: (Eq a, Eq b, Show a, Show b) => [(a, b)] -> (b -> Maybe b) -> a -> [(a, b)]
-updateWith set update key =
-    case showTrace $ lookup key set of
-      Just b -> replace set
-                        (showTrace $ unwrapPair (key, update b))
-                        (fromMaybe 0 $ elemIndex (key, b) set)
-      Nothing -> set
-  where replace :: [a] -> Maybe a -> Int -> [a]
-        replace [] _ _ = []
-        replace (_:xs) (Just val) 0 = val:xs
-        replace (_:xs) Nothing 0 = xs
-        replace (x:xs) val i = x : (replace xs val $ i - 1)
+updateWith :: (Eq a, Eq b) => [(a, b)] -> (b -> Maybe b) -> a -> [(a, b)]
+updateWith [] e k = []
+updateWith ((k', v):kvs) e k
+    | k' == k   = case e v of
+                    Just v' -> (k, v'):kvs
+                    Nothing -> kvs
+    | otherwise = (k', v) : updateWith kvs e k
 
 allocateGames :: [Game] -> [UserRank] -> [(User, Game)]
-allocateGames games rank = let written = runWriterT $ allocateGamesImpl rank
-                               ((_, log), _) = runState written $ buildQuotas games
-                            in log
+allocateGames games rank = forceState . runState (allocateGamesImpl rank) $ buildQuotas games
+  where buildQuotas = ap zip (map inventory) . filter ((> 0) . inventory)
+        forceState = uncurry (flip seq)
 
-allocateGamesImpl :: [UserRank] -> WriterT [(User, Game)] (State [Inventory]) ()
-allocateGamesImpl [] = return ()
+allocateGamesImpl :: [UserRank] -> State [Inventory] [(User, Game)]
+allocateGamesImpl [] = return []
 allocateGamesImpl ((user, (game, _)):ranks) =
-    do tell [(user, game)]
-       inventory' <- get
-       return $ updateWith inventory' (\i -> if i <= 0
-                                          then Nothing
-                                          else Just $ i - 1) game
-       allocateGamesImpl $ filter ((/= user) . fst) ranks
+    do inventory' <- get
+       if isJust $ lookup game inventory'
+          then do put $ updateWith inventory' (\i -> if i <= 1
+                                                    then Nothing
+                                                    else Just $ i - 1) game
+                  next <- allocateGamesImpl $ filter ((/= user) . fst) ranks
+                  return $ (user, game) : next
+          else allocateGamesImpl ranks
 
 rankUsers :: CSV OfUsers -> CSV OfPrefs -> CSV OfOwner -> [Game] -> Maybe [(User, Game)]
 rankUsers csvUsers csvPrefs csvOwner games =
@@ -68,6 +59,7 @@ rankUsers csvUsers csvPrefs csvOwner games =
        let rankings = into . zip users $ map (recommended games) users
            ranked   = sortBy (flip $ comparing (snd . snd)) rankings
        return $ allocateGames games ranked
+  where into x = concat $ map (\(a, bs) -> map ((,) a) bs) x
 
 
 main :: IO ()
