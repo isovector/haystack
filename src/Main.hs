@@ -18,6 +18,7 @@ main =
        csvUsers :: CSV OfUsers <- parseCSV <$> readFile "users.csv"
        csvGames :: CSV OfGames <- parseCSV <$> readFile "games.csv"
        mapM_ (putStrLn . show) . csvToGames $ csvGames
+       putStrLn . show $ getUser csvUsers "isovector"
 
        -- update database (AddGame twister)
        -- update database (AddGame bsgtbg)

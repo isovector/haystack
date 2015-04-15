@@ -1,6 +1,7 @@
 module CSV (CSV
            , column
            , rows
+           , rowWhere
            , parseCSV
            , columnVals
            , asBool
@@ -9,6 +10,7 @@ module CSV (CSV
            , OfUsers
            , OfGames) where
 
+import Data.List (find)
 import Data.List.Split (splitOn)
 import Control.Monad (liftM)
 
@@ -26,6 +28,11 @@ column csv col f row = fmap (f . (row !!)) $ columnIndex csv col
 
 columnVals :: CSV a -> String -> (String -> b) -> Maybe [b]
 columnVals csv col f = sequence . map (column csv col f) $ rows csv
+
+rowWhere :: CSV a -> String -> (String -> Bool) -> Maybe [String]
+rowWhere csv col p = find go $ rows csv
+  where go = maybe False p . column csv col id
+
 
 parseCSV :: String -> CSV a
 parseCSV file = CSV { labels = labels, rows = rows }

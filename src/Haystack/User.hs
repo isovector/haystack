@@ -5,6 +5,8 @@ import Data.List ((\\))
 import Data.Typeable
 import Haystack.Game
 
+import CSV (CSV, OfUsers, rowWhere)
+
 
 data User = User { username :: String
                  , prefs :: GamePref
@@ -13,4 +15,7 @@ data User = User { username :: String
 recommended :: [Game] -> User -> [(Game, Int)]
 recommended games u = scoreGames (prefs u)
                     $ games \\ (owned u)
+
+getUser :: CSV OfUsers -> String -> Maybe [String]
+getUser csv name = rowWhere csv "username" (name ==)
 
