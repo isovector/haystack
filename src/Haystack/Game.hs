@@ -56,6 +56,7 @@ csvToGames csv = catMaybes . map toGame $ rows csv
                                                         }}
         where get f col = column csv col f row
 
+
 score :: GamePref -> GameData -> Int
 score pref game =
     foldl1 (+) $

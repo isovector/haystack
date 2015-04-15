@@ -10,7 +10,8 @@ module CSV ( CSV
            , asString
            , OfUsers
            , OfGames
-           , OfOwner) where
+           , OfOwner
+           , OfPrefs) where
 
 import Text.ParserCombinators.Parsec (sepBy, endBy, char, string, noneOf, many, parse, (<|>), (<?>), try)
 
@@ -20,6 +21,7 @@ import Control.Monad (liftM)
 data OfGames = OfGames
 data OfUsers = OfUsers
 data OfOwner = OfOwner
+data OfPrefs = OfPrefs
 data CSV a = CSV { labels :: [String]
                  , rows :: [[String]]
                  } deriving (Show)

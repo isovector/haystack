@@ -6,22 +6,48 @@ import Data.Typeable
 import Haystack.Game
 import Utils (unwrapPair)
 
-import CSV (CSV, OfUsers, OfOwner, rowWhere, labels, column, asBool)
+import CSV (CSV, OfUsers, OfOwner, OfPrefs, rowWhere, labels, column, asBool, asInt)
 
 
 data User = User { username :: String
                  , prefs :: GamePref
-                 , owned :: [Game] } deriving (Eq, Show, Typeable)
+                 , owned :: [String] } deriving (Eq, Show, Typeable)
 
 recommended :: [Game] -> User -> [(Game, Int)]
 recommended games u = scoreGames (prefs u)
-                    $ games \\ (owned u)
+                    $ games -- \\ (owned u)
 
 getUserRow :: CSV a -> String -> Maybe [String]
 getUserRow csv name = rowWhere csv "username" (name ==)
 
-getUser :: CSV OfUsers -> String -> Maybe [String]
-getUser = getUserRow
+getUser :: CSV OfUsers -> CSV OfPrefs -> CSV OfOwner -> String -> Maybe User
+getUser ucsv pcsv ocsv name =
+    do popular  <- pget asInt "popular"
+       gems     <- pget asInt "gems"
+       new      <- pget asInt "new"
+       family   <- pget asInt "family"
+       party    <- pget asInt "party"
+       abstract <- pget asInt "abstract"
+       strategy <- pget asInt "strategy"
+       player2  <- pget asInt "player2"
+       player3  <- pget asInt "player3"
+       owned    <- getOwnership ocsv name
+       return User { username = name
+                   , owned = owned
+                   , prefs = GamePref { likesPopular    = popular
+                                      , likesNewRelease = new
+                                      , likesForgotten  = gems
+                                      , likesFamily     = family
+                                      , likesParty      = party
+                                      , likesAbstract   = abstract
+                                      , likesStrategy   = strategy
+                                      , likes2Player    = player2
+                                      , likes3Player    = player3
+                                      } }
+  where uget f col = do row <- getUserRow ucsv name
+                        column ucsv col f row
+        pget f col = do row <- getUserRow pcsv name
+                        column pcsv col f row
 
 -- this is gnarly, but hey it works
 getOwnership :: CSV OfOwner -> String -> Maybe [String]

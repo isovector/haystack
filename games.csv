@@ -1,4 +1,7 @@
 name,quantity,category,family,party,abstract,strategy,player2,player3
-Twister,1,Popular,X,X,"","",X,X
-BSGTBG,1,Forgotten,"","",X,X,"",X
-Bang,0,Popular,X,X,"",X,"",X
+"Love Letter",25,"Popular","","","",X,X,X
+"Just Deserts",1,"NewRelease",X,"","",X,X,X
+"Al Rashid",74,"Forgotten","","","",X,"",X
+"Titans Tactics",72,"NewRelease",X,"","",X,X,""
+"Choose One",4,"Forgotten","",X,"","","",X
+"UNO",1,"Popular",X,,,,,X

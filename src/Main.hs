@@ -8,22 +8,28 @@ import Haystack.Database
 import Haystack.Game
 import Haystack.User
 import Haystack.Web.Routes
+import System.Environment (getArgs)
 
 import CSV
 import Happstack.Server
 
 main :: IO ()
 main =
-    do database <- openLocalState $ Database [] []
+    do argv <- getArgs
        csvUsers :: CSV OfUsers <- parseCSV <$> readFile "users.csv"
-       csvGames :: CSV OfGames <- parseCSV <$> readFile "games.csv"
+       games <- csvToGames . parseCSV <$> readFile "games.csv"
        csvOwner :: CSV OfOwner <- parseCSV <$> readFile "ownership.csv"
-       mapM_ (putStrLn . show) . csvToGames $ csvGames
-       putStrLn . show $ getUser csvUsers "isovector"
-       putStrLn . show $ getOwnership csvOwner "annametreveli"
+       csvPrefs :: CSV OfPrefs <- parseCSV <$> readFile "prefs.csv"
+
+       let user = getUser csvUsers csvPrefs csvOwner "sheehanna"
+           recs = fmap (recommended games) user
+           done = fmap (fmap (\x -> (gameName (fst x), snd x))) recs
+
+       putStrLn . show $ done
 
        -- update database (AddGame twister)
        -- update database (AddGame bsgtbg)
+       -- database <- openLocalState $ Database [] []
        {-simpleHTTP nullConf $ do-}
              {-decodeBody (defaultBodyPolicy "/tmp/" 4096 4096 4096)-}
              {-runReaderT routes database-}
