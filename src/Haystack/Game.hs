@@ -10,6 +10,7 @@ import CSV           (CSV, OfGames, asInt, asBool, asString, rows, column)
 
 
 data Game = Game { gameName :: String
+                 , inventory :: Int
                  , metadata :: GameData
                  } deriving (Eq, Show, Read, Typeable)
 
@@ -37,15 +38,17 @@ data GamePref = GamePref { likesPopular :: Int
 csvToGames :: CSV OfGames -> [Game]
 csvToGames csv = catMaybes . map toGame $ rows csv
   where
-      toGame row = do name     <- get asString "name"
-                      category <- get asCategory "category"
-                      family   <- get asBool "family"
-                      party    <- get asBool "party"
-                      abstract <- get asBool "abstract"
-                      strategy <- get asBool "strategy"
-                      player2  <- get asBool "player2"
-                      player3  <- get asBool "player3"
+      toGame row = do name      <- get asString "name"
+                      inventory <- get asInt "inventory"
+                      category  <- get asCategory "category"
+                      family    <- get asBool "family"
+                      party     <- get asBool "party"
+                      abstract  <- get asBool "abstract"
+                      strategy  <- get asBool "strategy"
+                      player2   <- get asBool "player2"
+                      player3   <- get asBool "player3"
                       return Game { gameName = name
+                                  , inventory = inventory
                                   , metadata = GameData { category   = category
                                                         , isFamily   = family
                                                         , isParty    = party

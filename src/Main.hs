@@ -1,10 +1,15 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 module Main where
 
+import Data.List (sortBy, elemIndex)
+import Data.Ord (comparing)
 import Prelude hiding (mapM_, forM_)
 import Data.Foldable (mapM_, forM_)
+import Control.Monad.Writer (WriterT, tell, runWriterT)
+import Control.Monad.State (State, get, put, runState)
 import Control.Monad.IO.Class (liftIO)
 import Control.Applicative ((<$>))
+import Control.Monad (ap)
 import Control.Monad.Reader (runReaderT)
 import Data.Acid
 import Data.Maybe (fromMaybe)
@@ -13,15 +18,56 @@ import Haystack.Game
 import Haystack.User
 import Haystack.Web.Routes
 import System.Environment (getArgs)
+import Utils (showTrace, unwrapPair)
 
 import CSV
 import Happstack.Server
 
---rankUsers :: CSV OfUsers -> CSV OfPrefs -> CSV OfOwner -> [Game] -> Maybe [(User, (Game, Int))]
+
+type Inventory = (Game, Int)
+type UserRank = (User, (Game, Int))
+
+buildQuotas :: [Game] -> [Inventory]
+buildQuotas = ap zip (map inventory) . filter ((> 0) . inventory)
+
+into :: [(a, [b])] -> [(a, b)]
+into x = concat $ map (\(a, bs) -> map ((,) a) bs) x
+
+updateWith :: (Eq a, Eq b, Show a, Show b) => [(a, b)] -> (b -> Maybe b) -> a -> [(a, b)]
+updateWith set update key =
+    case showTrace $ lookup key set of
+      Just b -> replace set
+                        (showTrace $ unwrapPair (key, update b))
+                        (fromMaybe 0 $ elemIndex (key, b) set)
+      Nothing -> set
+  where replace :: [a] -> Maybe a -> Int -> [a]
+        replace [] _ _ = []
+        replace (_:xs) (Just val) 0 = val:xs
+        replace (_:xs) Nothing 0 = xs
+        replace (x:xs) val i = x : (replace xs val $ i - 1)
+
+allocateGames :: [Game] -> [UserRank] -> [(User, Game)]
+allocateGames games rank = let written = runWriterT $ allocateGamesImpl rank
+                               ((_, log), _) = runState written $ buildQuotas games
+                            in log
+
+allocateGamesImpl :: [UserRank] -> WriterT [(User, Game)] (State [Inventory]) ()
+allocateGamesImpl [] = return ()
+allocateGamesImpl ((user, (game, _)):ranks) =
+    do tell [(user, game)]
+       inventory' <- get
+       return $ updateWith inventory' (\i -> if i <= 0
+                                          then Nothing
+                                          else Just $ i - 1) game
+       allocateGamesImpl $ filter ((/= user) . fst) ranks
+
+rankUsers :: CSV OfUsers -> CSV OfPrefs -> CSV OfOwner -> [Game] -> Maybe [(User, Game)]
 rankUsers csvUsers csvPrefs csvOwner games =
     do usernames <- columnVals csvUsers "username" asString
        users <- sequence $ map (getUser csvUsers csvPrefs csvOwner) usernames
-       return . zip users $ map (head . recommended games) users
+       let rankings = into . zip users $ map (recommended games) users
+           ranked   = sortBy (flip $ comparing (snd . snd)) rankings
+       return $ allocateGames games ranked
 
 
 main :: IO ()
@@ -36,7 +82,7 @@ main =
 
        mapM_ (
            mapM_ (
-               \(u, (g, i)) -> putStrLn . show $ (username u, gameName g))) rankings
+               \(u, g) -> putStrLn . show $ (username u, gameName g))) rankings
 
        {-let user = getUser csvUsers csvPrefs csvOwner "sheehanna"-}
            {-recs = fmap (recommended games) user-}
