@@ -1,4 +1,5 @@
-module CSV (CSV
+module CSV ( CSV
+           , labels
            , column
            , rows
            , rowWhere
@@ -8,14 +9,17 @@ module CSV (CSV
            , asInt
            , asString
            , OfUsers
-           , OfGames) where
+           , OfGames
+           , OfOwner) where
+
+import Text.ParserCombinators.Parsec (sepBy, endBy, char, string, noneOf, many, parse, (<|>), (<?>), try)
 
 import Data.List (find)
-import Data.List.Split (splitOn)
 import Control.Monad (liftM)
 
 data OfGames = OfGames
 data OfUsers = OfUsers
+data OfOwner = OfOwner
 data CSV a = CSV { labels :: [String]
                  , rows :: [[String]]
                  } deriving (Show)
@@ -35,10 +39,29 @@ rowWhere csv col p = find go $ rows csv
 
 
 parseCSV :: String -> CSV a
-parseCSV file = CSV { labels = labels, rows = rows }
-  where fileLines = map (splitOn ",") $ lines file
+parseCSV input = CSV { labels = labels, rows = rows }
+  where fileLines = case parse csvFile "(unknown)" input of
+                      Left l  -> [[],[]]
+                      Right r -> r
         labels = head fileLines
         rows = tail fileLines
+
+        csvFile = endBy line eol
+        line = sepBy cell (char ',')
+        cell = quotedCell <|> many (noneOf ",\n\r")
+        quotedCell = do char '"'
+                        content <- many quotedChar
+                        char '"' <?> "quote at end of cell"
+                        return content
+        quotedChar =
+            noneOf "\""
+            <|> try (string "\"\"" >> return '"')
+        eol =
+            try (string "\n\r")
+            <|> try (string "\r\n")
+            <|> string "\n"
+            <|> string "\r"
+            <?> "end of line"
 
 asBool :: String -> Bool
 asBool = ("X" ==)
@@ -47,7 +70,5 @@ asInt :: String -> Int
 asInt = read
 
 asString :: String -> String
-asString s = case s of
-               "\"\"" -> ""
-               x -> x
+asString = id
 
