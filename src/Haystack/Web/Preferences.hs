@@ -1,4 +1,3 @@
-
 {-# LANGUAGE OverloadedStrings, ScopedTypeVariables #-}
 module Haystack.Web.Preferences where
 
