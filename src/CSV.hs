@@ -41,7 +41,7 @@ parseCSV file = CSV { labels = labels, rows = rows }
         rows = tail fileLines
 
 asBool :: String -> Bool
-asBool = ("x" ==)
+asBool = ("X" ==)
 
 asInt :: String -> Int
 asInt = read
