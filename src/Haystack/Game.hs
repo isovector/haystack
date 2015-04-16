@@ -4,7 +4,9 @@ module Haystack.Game where
 import Control.Monad (liftM2)
 import Data.Foldable (foldlM)
 import Data.Typeable
-import Utils         (pmap, partialLift)
+import Safe
+
+import Utils         (pmap)
 import CSV           (CSV, OfGames, OfPrefs, asInt, asBool, asString, rows, column, toCSV)
 
 import Haystack.Types
@@ -123,6 +125,15 @@ scoreGames :: GamePref -> [Game] -> [(Game, Int)]
 scoreGames pref games = pmap (id, score pref . metadata)
                       $ zip games games
 
-asCategory :: String -> Category
-asCategory = read
+asCategory :: String -> Try Category
+asCategory mc = case readMay mc of
+                  Just c  -> return c
+                  Nothing -> throwError $
+                    flip (BadParse mc) "games.csv" (
+                        "category field must be one of: "
+                            ++ show "Popular"
+                            ++ ", "
+                            ++ show "NewRelease"
+                            ++ ", "
+                            ++ show "Forgotten" )
 

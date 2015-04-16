@@ -113,7 +113,7 @@ getUser ucsv pcsv ocsv owns name =
 
 -- this is gnarly, but hey it works
 getOwnership :: CSV OfOwner -> String -> Try [String]
-getOwnership csv name = do pairs <- sequence . map owns $ labels csv
+getOwnership csv name = do pairs <- sequence . map owns . tail $ labels csv
                            return . map fst $ filter snd pairs
   where owns label = do row <- getUserRow csv name
                         unwrapPair . ((,) label)

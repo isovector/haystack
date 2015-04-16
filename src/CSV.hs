@@ -4,6 +4,7 @@ import Text.ParserCombinators.Parsec (sepBy, endBy, char, string, noneOf, many, 
 
 import Data.List (find)
 import Control.Monad (liftM)
+import Safe
 
 import Haystack.Types
 
@@ -24,10 +25,10 @@ showLineCSV = init . ((++ ",") . show =<<)
 columnIndex :: CSV a -> String -> Try Int
 columnIndex (CSV labels _) idx = colLookup idx $ zip labels [0..]
 
-column :: CSV a -> String -> (String -> b) -> [String] -> Try b
-column csv col f row = fmap (f . (row !!)) $ columnIndex csv col
+column :: CSV a -> String -> (String -> Try b) -> [String] -> Try b
+column csv col f row = (f . (row !!)) =<< columnIndex csv col
 
-columnVals :: CSV a -> String -> (String -> b) -> Try [b]
+columnVals :: CSV a -> String -> (String -> Try b) -> Try [b]
 columnVals csv col f = sequence . map (column csv col f) $ rows csv
 
 rowWhere :: CSV a -> String -> (String -> Bool) -> Try [String]
@@ -67,12 +68,21 @@ parseCSV input = CSV { labels = labels, rows = rows }
             <|> string "\r"
             <?> "end of line"
 
-asBool :: String -> Bool
-asBool = ("X" ==)
+asBool :: String -> Try Bool
+asBool mb = case mb of
+             "X" -> return True
+             ""  -> return False
+             _   -> throwError $ BadParse mb
+                                          "use X to indicate `yes`, leave blank for `no`"
+                                          "games.csv, probably"
 
-asInt :: String -> Int
-asInt = read
+asInt :: String -> Try Int
+asInt mi = case readMay mi of
+             Just i  -> return i
+             Nothing -> throwError $ BadParse mi
+                                              "not a number"
+                                              "prefs.csv, probably"
 
-asString :: String -> String
-asString = id
+asString :: String -> Try String
+asString = return . id
 

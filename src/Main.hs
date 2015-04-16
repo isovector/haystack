@@ -117,4 +117,3 @@ main =
              putStrLn (show u ++ (show gn))
              update db (StageOwner (username u) gn)
 
-
