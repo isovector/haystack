@@ -1,27 +1,17 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 module Main where
 
-import Data.List (sortBy, elemIndex)
-import Data.Ord (comparing)
 import Prelude hiding (mapM_, forM_)
-import Data.Foldable (mapM_, forM_)
+import Data.List (elemIndex)
 import Control.Monad.Writer (WriterT, tell, runWriterT)
 import Control.Monad.State (State, get, put, runState)
-import Control.Monad.IO.Class (liftIO)
-import Control.Applicative ((<$>))
-import Control.Monad (ap)
 import Control.Monad.Reader (runReaderT)
-import Data.Acid
-import Data.Maybe (fromMaybe, isJust)
-import Haystack.Database
-import Haystack.Game
-import Haystack.User
-import Haystack.Web.Routes
 import System.Environment (getArgs)
 import Utils (showTrace, unwrapPair)
 
 import CSV
-import Happstack.Server
+import Haystack
+import Haystack.Web.Routes
 
 
 type Inventory = (Game, Int)

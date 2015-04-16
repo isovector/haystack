@@ -1,23 +1,21 @@
 {-# LANGUAGE OverloadedStrings, ScopedTypeVariables #-}
 module Haystack.Web.Preferences where
 
-import Control.Monad.IO.Class (liftIO)
+import Prelude hiding (forM_, mapM_)
+
 import Debug.Trace (trace)
-import Haystack.Game
-import Haystack.Database
 import Control.Applicative ((<$>), optional)
-import Control.Monad (forM_, mapM_, msum)
+import Control.Monad (msum)
 import Control.Monad.Reader (ask, ReaderT)
-import Data.Acid
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import Data.Text.Lazy (unpack)
-import Happstack.Server
 import Text.Blaze.Html5 (Html, (!), a, form, input, p, toHtml, label, option, select)
 import Text.Blaze.Html5.Attributes (action, enctype, href, name, size, type_, value)
 import qualified Text.Blaze.Html5 as H
 import qualified Text.Blaze.Html5.Attributes as A
 
+import Haystack
 import Haystack.Web.Template
 
 
