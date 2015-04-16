@@ -8,6 +8,7 @@ import Control.Monad.Writer (WriterT, tell, runWriterT)
 import Control.Monad.State (State, get, put, runState)
 import Control.Monad.Reader (runReaderT)
 import System.Environment (getArgs)
+import System.IO
 import Utils (showTrace, unwrapPair)
 
 import CSV
@@ -84,7 +85,7 @@ main =
                 do update db ClearStage
                    mapM_ (withRanking db) ranked
 
-              Left problem -> putStrLn . show $ problem
+              Left problem -> hPutStrLn stderr . show $ problem
 
 
       withRanking db (u, g) =
