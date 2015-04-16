@@ -1,7 +1,7 @@
 name,inventory,category,family,party,abstract,strategy,player2,player3
-"Love Letter",1,"Popular","","","",X,X,X
-"Just Deserts",1,"NewRelease",X,"","",X,X,X
 "Al Rashid",1,"Forgotten","","","",X,"",X
 "Titans Tactics",1,"NewRelease",X,"","",X,X,""
 "Choose One",1,"Forgotten","",X,"","","",X
 "UNO",1,"Popular",X,,,,,X
+"Love Letter",1,"Popular","","","",X,X,X
+"Just Deserts",1,"NewRelease",X,"","",X,X,X

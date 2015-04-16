@@ -33,7 +33,12 @@ prefMap = [ ("popular",  "Popular")
 
 
 prefTable :: Html
-prefTable = H.table $ forM_ prefMap prefRow
+prefTable = H.table $ do H.tr $ do H.td ! A.style "text-align: right"
+                                        $ label "Username:"
+                                   H.td $ input
+                                        ! type_ "input"
+                                        ! name "username"
+                         forM_ prefMap prefRow
   where
       prefRow (v, s) = H.tr $ do
           H.td ! A.style "text-align: right" $ label $ H.string (s ++ ":")
@@ -50,6 +55,7 @@ runForm submit contents =
     form ! action "/form"
          ! enctype "multipart/form-data"
          ! A.method "POST" $ do
+             input ! type_ "submit" ! value "No preferences!"
              contents
              input ! type_ "submit" ! value submit
 
@@ -59,20 +65,21 @@ prefPage = msum [ viewForm, processForm ]
   where
       viewForm =
           do method GET
-             ok $ template "form" $ do
-               runForm "No Preferences" ""
+             ok $ template "Update Preferences" $ do
                runForm "Submit!" prefTable
 
       processForm =
           do method POST
              db <- ask
-             --(games, _) <- liftIO $ query db (GetState)
+
+             username <- unpack <$> lookText "username"
              formData <- sequence $ map (runText . fst) prefMap
              let prefs = buildPref formData
 
-             ok $ template "form" $ do
-                 H.p "You said:"
-                 --mapM_ (printScores prefs) games
+             liftIO $ update db (SetPrefs username prefs)
+
+             ok $ template "Preferences Saved" $ do
+                 H.p "Your preferences have been saved!"
 
       buildPref prefs =
           GamePref { likesPopular    = get "popular"

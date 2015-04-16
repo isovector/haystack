@@ -107,8 +107,9 @@ getUser ucsv pcsv ocsv owns name =
                                       } }
   where uget f col = do row <- getUserRow ucsv name
                         column ucsv col f row
-        pget f col = do row <- getUserRow pcsv name
-                        column pcsv col f row
+        pget f col = do case getUserRow pcsv name of
+                            Right row -> column pcsv col f row
+                            Left _    -> return 2
 
 -- this is gnarly, but hey it works
 getOwnership :: CSV OfOwner -> String -> Try [String]

@@ -7,6 +7,7 @@ import Data.List (elemIndex, (\\))
 import Control.Monad.Writer (WriterT, tell, runWriterT)
 import Control.Monad.State (State, get, put, runState)
 import Control.Monad.Reader (runReaderT)
+import Safe (headMay)
 import System.Environment (getArgs)
 import System.IO
 import Utils (showTrace, unwrapPair)
@@ -62,17 +63,38 @@ rankUsers csvUsers csvPrefs csvOwner owned games =
           else throwError . NoGames . map username $ (users \\ (map fst allocated))
   where into x = concat $ map (\(a, bs) -> map ((,) a) bs) x
 
-
 main :: IO ()
 main =
-    do argv <- getArgs
-       db <- openLocalState $ Database [] []
+    do cmd <- headMay <$> getArgs
+       db <- openLocalState $ Database [] [] []
 
-       if elem "commit" argv
-          then update db CommitStage
-          else doRanking db
+       case cmd of
+         Just "commit" -> do update db CommitStage
+                             putStrLn "updating user ownership with last ranking"
+         Just "help"   -> doHelp
+         Just "server" -> doServer db
+         Just "rank"   -> doRanking db
+         Nothing       -> doServer db
 
   where
+      doHelp =
+          do putStrLn "usage: ./haystack [cmd]"
+             putStrLn ""
+             putStrLn "Haystack is a game ranking platform for Gamebox Monthly."
+             putStrLn ""
+             putStrLn "optional arguments:"
+             putStrLn "   help\t\tshow this help"
+             putStrLn "   commit\tconfirm that the last order sheet was sent"
+             putStrLn "   server\trun the web application"
+             putStrLn "   rank\t\toutput an order sheet to `order.csv`"
+
+
+      doServer db =
+          do putStrLn "running haystack web application on port 80"
+             simpleHTTP nullConf $ do
+               decodeBody (defaultBodyPolicy "/tmp/" 4096 4096 4096)
+               runReaderT routes db
+
       doRanking db =
          do csvUsers <- parseCSV <$> readFile "users.csv"
             csvOwner <- parseCSV <$> readFile "ownership.csv"
@@ -93,9 +115,4 @@ main =
              putStrLn (show u ++ (show gn))
              update db (StageOwner (username u) gn)
 
-       -- update database (AddGame twister)
-       -- update database (AddGame bsgtbg)
-       {-simpleHTTP nullConf $ do-}
-             {-decodeBody (defaultBodyPolicy "/tmp/" 4096 4096 4096)-}
-             {-runReaderT routes database-}
 
