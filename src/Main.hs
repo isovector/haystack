@@ -9,6 +9,7 @@ import Control.Monad.State (State, get, put, runState)
 import Control.Monad.Reader (runReaderT)
 import Safe (headMay)
 import System.Environment (getArgs)
+import System.Exit
 import System.IO
 import Utils (showTrace, unwrapPair)
 
@@ -74,7 +75,7 @@ main =
          Just "help"   -> doHelp
          Just "server" -> doServer  db
          Just "rank"   -> doRanking db
-         Nothing       -> doServer  db
+         Nothing       -> doRanking db
 
   where
       doHelp =
@@ -106,7 +107,9 @@ main =
                 do update db ClearStage
                    mapM_ (withRanking db) ranked
 
-              Left problem -> hPutStrLn stderr . show $ problem
+              Left problem ->
+                do hPutStrLn stderr . show $ problem
+                   exitWith $ ExitFailure 1
 
 
       withRanking db (u, g) =
