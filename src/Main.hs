@@ -1,7 +1,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 module Main where
 
-import Prelude hiding (mapM_, forM_, concat)
+import Prelude hiding (mapM_, forM_, concat, elem)
 import Data.Foldable
 import Data.List (elemIndex, (\\))
 import Control.Monad.Writer (WriterT, tell, runWriterT)
@@ -43,10 +43,15 @@ allocateGamesImpl ((user, (game, _)):ranks) =
                   return $ (user, game) : next
           else allocateGamesImpl ranks
 
-rankUsers :: CSV OfUsers -> CSV OfPrefs -> CSV OfOwner -> [Game] -> Try [(User, Game)]
-rankUsers csvUsers csvPrefs csvOwner games =
+rankUsers :: CSV OfUsers
+          -> CSV OfPrefs
+          -> CSV OfOwner
+          -> [Owned]
+          -> [Game]
+          -> Try [(User, Game)]
+rankUsers csvUsers csvPrefs csvOwner owned games =
     do usernames <- columnVals csvUsers "username" asString
-       users <- sequence $ map (getUser csvUsers csvPrefs csvOwner) usernames
+       users <- sequence $ map (getUser csvUsers csvPrefs csvOwner owned) usernames
        let rankings = into . zip users $ map (recommended games) users
            ranked   = sortBy (flip $ comparing (snd . snd)) rankings
            allocated = allocateGames games ranked
@@ -60,21 +65,35 @@ rankUsers csvUsers csvPrefs csvOwner games =
 main :: IO ()
 main =
     do argv <- getArgs
-       csvUsers <- parseCSV <$> readFile "users.csv"
-       csvOwner <- parseCSV <$> readFile "ownership.csv"
-       csvPrefs <- parseCSV <$> readFile "prefs.csv"
-       games <- csvToGames . parseCSV <$> readFile "games.csv"
+       db <- openLocalState $ Database [] []
 
-       let rankings = rankUsers csvUsers csvPrefs csvOwner games
+       if elem "commit" argv
+          then update db CommitStage
+          else doRanking db
 
-       case rankings of
-         Right ranked ->
-           mapM_ (\(u, g) -> putStrLn (show u ++ (show $ gameName g))) ranked
-         Left problem -> putStrLn . show $ problem
+  where
+      doRanking db =
+         do csvUsers <- parseCSV <$> readFile "users.csv"
+            csvOwner <- parseCSV <$> readFile "ownership.csv"
+            csvPrefs <- parseCSV <$> readFile "prefs.csv"
+            games <- csvToGames . parseCSV <$> readFile "games.csv"
+
+            owned <- query db GetOwned
+            case rankUsers csvUsers csvPrefs csvOwner owned games of
+              Right ranked ->
+                do update db ClearStage
+                   mapM_ (withRanking db) ranked
+
+              Left problem -> putStrLn . show $ problem
+
+
+      withRanking db (u, g) =
+          do let gn = gameName g
+             putStrLn (show u ++ (show gn))
+             update db (StageOwner (username u) gn)
 
        -- update database (AddGame twister)
        -- update database (AddGame bsgtbg)
-       -- database <- openLocalState $ Database [] []
        {-simpleHTTP nullConf $ do-}
              {-decodeBody (defaultBodyPolicy "/tmp/" 4096 4096 4096)-}
              {-runReaderT routes database-}

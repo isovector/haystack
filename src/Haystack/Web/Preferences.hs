@@ -66,13 +66,13 @@ prefPage = msum [ viewForm, processForm ]
       processForm =
           do method POST
              db <- ask
-             (games, _) <- liftIO $ query db (GetState)
+             --(games, _) <- liftIO $ query db (GetState)
              formData <- sequence $ map (runText . fst) prefMap
              let prefs = buildPref formData
 
              ok $ template "form" $ do
                  H.p "You said:"
-                 mapM_ (printScores prefs) games
+                 --mapM_ (printScores prefs) games
 
       buildPref prefs =
           GamePref { likesPopular    = get "popular"

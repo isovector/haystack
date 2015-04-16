@@ -6,30 +6,52 @@ import Control.Monad.State  (get, put)
 import Data.Acid
 import Data.SafeCopy
 import Data.Typeable
-import Haystack.Game
-import Haystack.User
 import Happstack.Server (ServerPartT)
 
+type Owned = (String, [String])
 
-data Database = Database [Game] [User] deriving (Typeable)
 
-$(deriveSafeCopy 0 'base ''Category) -- '
+data Database = Database [Owned] [Owned] deriving (Typeable)
+
+
+
 $(deriveSafeCopy 0 'base ''Database) -- '
-$(deriveSafeCopy 0 'base ''Game)     -- '
-$(deriveSafeCopy 0 'base ''GameData) -- '
-$(deriveSafeCopy 0 'base ''GamePref) -- '
-$(deriveSafeCopy 0 'base ''User)     -- '
-$(deriveSafeCopy 0 'base ''ShipAddr) -- '
 
 type App = ReaderT (AcidState Database) (ServerPartT IO)
 
-addGame :: Game -> Update Database ()
-addGame game = do Database games users <- get
-                  put $ Database (game:games) users
+clearStage :: Update Database ()
+clearStage = do Database owns _ <- get
+                put $ Database owns []
 
-getState :: Query Database ([Game], [User])
-getState = do Database games users <- ask
-              return (games, users)
+stageOwner :: String -> String -> Update Database ()
+stageOwner u g = do Database owns staged <- get
+                    put $ Database owns ((u, [g]):staged)
 
-$(makeAcidic ''Database ['addGame, 'getState])
+merge :: Eq a => [(a, [b])] -> [(a, [b])] -> [(a, [b])]
+merge xs ys = merge' xs ys []
+  where
+      merge' _ [] ws = ws
+      merge' [] ys _ = ys
+      merge' xs ((k, y):ys) ws =
+          (case lookup k xs of
+            Just x  -> (k, x ++ y)
+            Nothing -> (k, y)) : merge' xs ys ws
+
+commitStage :: Update Database ()
+commitStage = do Database owns staged <- get
+                 put $ Database (merge owns staged) []
+
+getOwned :: Query Database [Owned]
+getOwned = do Database owns _ <- ask
+              return owns
+
+getStage :: Query Database [Owned]
+getStage = do Database _ staged <- ask
+              return staged
+
+$(makeAcidic ''Database [ 'clearStage
+                        , 'stageOwner
+                        , 'commitStage
+                        , 'getStage
+                        , 'getOwned])
 

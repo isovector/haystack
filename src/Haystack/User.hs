@@ -1,6 +1,8 @@
 {-# LANGUAGE DeriveDataTypeable, RecordWildCards #-}
 module Haystack.User where
 
+import Control.Applicative ((<$>))
+import Data.Maybe (maybeToList)
 import Data.List ((\\), sortBy)
 import Data.Ord (comparing)
 import Data.Typeable
@@ -9,6 +11,7 @@ import Utils (unwrapPair)
 
 import CSV (CSV, OfUsers, OfOwner, OfPrefs, rowWhere, labels, column, asBool, asInt, asString)
 import Haystack.Types
+import Haystack.Database
 
 data ShipAddr = ShipAddr { shipName :: String
                          , company :: String
@@ -50,8 +53,13 @@ recommended games u = sortBy (flip $ comparing snd)
 getUserRow :: CSV a -> String -> Try [String]
 getUserRow csv name = rowWhere csv "username" (name ==)
 
-getUser :: CSV OfUsers -> CSV OfPrefs -> CSV OfOwner -> String -> Try User
-getUser ucsv pcsv ocsv name =
+getUser :: CSV OfUsers
+        -> CSV OfPrefs
+        -> CSV OfOwner
+        -> [Owned]
+        -> String
+        -> Try User
+getUser ucsv pcsv ocsv owns name =
     do popular      <- pget asInt "popular"
        gems         <- pget asInt "gems"
        new          <- pget asInt "new"
@@ -61,7 +69,9 @@ getUser ucsv pcsv ocsv name =
        strategy     <- pget asInt "strategy"
        player2      <- pget asInt "player2"
        player3      <- pget asInt "player3"
-       owned        <- getOwnership ocsv name
+
+       let myOwns = snd =<< filter ((== name) . fst) owns
+       owned        <- (++ myOwns) <$> getOwnership ocsv name
 
        addrShipName <- uget asString "shipName"
        addrCompany  <- uget asString "company"

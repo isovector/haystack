@@ -8,6 +8,7 @@ module Haystack
     , module Data.Acid
     , comparing
     , (<$>)
+    , (<*>)
     , optional
     , liftIO
     , ap
@@ -28,7 +29,7 @@ import Happstack.Server
 import Data.Acid
 
 import Data.Ord (comparing)
-import Control.Applicative ((<$>), optional)
+import Control.Applicative ((<$>), (<*>), optional)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad (ap)
 import Data.Maybe (fromMaybe, isJust)
