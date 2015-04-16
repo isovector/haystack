@@ -60,10 +60,15 @@ getStage :: Query Database [Owned]
 getStage = do Database _ staged _ <- ask
               return staged
 
+getPrefs :: Query Database [(String, GamePref)]
+getPrefs = do Database _ _ prefs <- ask
+              return prefs
+
 $(makeAcidic ''Database [ 'clearStage
                         , 'stageOwner
                         , 'commitStage
                         , 'getStage
                         , 'getOwned
+                        , 'getPrefs
                         , 'setPrefs])
 

@@ -8,5 +8,6 @@ import Control.Monad (msum)
 
 routes :: App Response
 routes = msum [ dir "form" $ prefPage
+              , dirs "api/preferences" $ servePrefs
               , homePage
               ]

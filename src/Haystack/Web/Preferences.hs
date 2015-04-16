@@ -104,4 +104,9 @@ prefPage = msum [ viewForm, processForm ]
               H.br
               toHtml (show . score pref $ metadata game)
 
+servePrefs :: App Response
+servePrefs = do db <- ask
+                prefs <- liftIO $ query db GetPrefs
+                ok . serveCSV $ export prefs
+
 

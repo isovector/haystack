@@ -8,6 +8,8 @@ import Text.Blaze.Html5.Attributes (action, enctype, href, name, size, type_, va
 import qualified Text.Blaze.Html5 as H
 import qualified Text.Blaze.Html5.Attributes as A
 
+import CSV
+
 
 template :: Text -> Html -> Response
 template title body = toResponse $
@@ -17,3 +19,6 @@ template title body = toResponse $
     H.body $ do
       body
       p $ a ! href "/" $ "back home"
+
+serveCSV :: CSV a -> Response
+serveCSV = toResponse . showCSV

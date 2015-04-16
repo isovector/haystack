@@ -13,7 +13,13 @@ data OfOwner = OfOwner
 data OfPrefs = OfPrefs
 data CSV a = CSV { labels :: [String]
                  , rows :: [[String]]
-                 } deriving (Show)
+                 }
+
+instance Show (CSV a) where
+    show = showCSV
+
+showLineCSV :: [String] -> String
+showLineCSV = init . ((++ ",") . show =<<)
 
 columnIndex :: CSV a -> String -> Try Int
 columnIndex (CSV labels _) idx = colLookup idx $ zip labels [0..]
@@ -28,6 +34,13 @@ rowWhere :: CSV a -> String -> (String -> Bool) -> Try [String]
 rowWhere csv col p = maybeTry (MissingRow $ "comparing column " ++ col) . find go $ rows csv
   where go = either (const False) p . column csv col asString
 
+showCSV :: CSV a -> String
+showCSV (CSV labels rows) = unlines $ return (showLineCSV labels) ++ map showLineCSV rows
+
+toCSV :: [String] -> [[String]] -> CSV a
+toCSV labels rows = CSV { labels = labels
+                        , rows = rows
+                        }
 
 parseCSV :: String -> CSV a
 parseCSV input = CSV { labels = labels, rows = rows }

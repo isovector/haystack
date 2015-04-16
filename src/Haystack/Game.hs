@@ -1,11 +1,11 @@
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveDataTypeable, RecordWildCards #-}
 module Haystack.Game where
 
 import Control.Monad (liftM2)
 import Data.Foldable (foldlM)
 import Data.Typeable
 import Utils         (pmap, partialLift)
-import CSV           (CSV, OfGames, asInt, asBool, asString, rows, column)
+import CSV           (CSV, OfGames, OfPrefs, asInt, asBool, asString, rows, column, toCSV)
 
 import Haystack.Types
 
@@ -35,6 +35,35 @@ data GamePref = GamePref { likesPopular :: Int
                          , likes2Player :: Int
                          , likes3Player :: Int
                          } deriving (Eq, Show, Read, Typeable)
+
+
+export :: [(String, GamePref)] -> CSV OfPrefs
+export ps = toCSV [ "username"
+                  , "popular"
+                  , "gems"
+                  , "new"
+                  , "family"
+                  , "party"
+                  , "abstract"
+                  , "strategy"
+                  , "player2"
+                  , "player3"
+                  ]
+                  $ flip map ps (
+                      \(u, p) -> u : map (show . ($ p))
+                                   [ likesPopular
+                                   , likesNewRelease
+                                   , likesNewRelease
+                                   , likesForgotten
+                                   , likesFamily
+                                   , likesParty
+                                   , likesAbstract
+                                   , likesStrategy
+                                   , likes2Player
+                                   , likes3Player
+                                   ])
+
+
 
 csvToGames :: CSV OfGames -> [Game]
 csvToGames csv = rights . map toGame $ rows csv

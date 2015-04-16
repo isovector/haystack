@@ -9,7 +9,7 @@ import Data.Typeable
 import Haystack.Game
 import Utils (unwrapPair)
 
-import CSV (CSV, OfUsers, OfOwner, OfPrefs, rowWhere, labels, column, asBool, asInt, asString)
+import CSV (CSV, OfUsers, OfOwner, OfPrefs, rowWhere, labels, column, asBool, asInt, asString, showLineCSV)
 import Haystack.Types
 import Haystack.Database
 
@@ -31,18 +31,18 @@ data User = User { username :: String
 
 instance Show User where
     show (User { address = ShipAddr { .. }, .. }) =
-        concat $ map ((++ ",") . show) [ "" -- order no.
-                                       , shipName
-                                       , company
-                                       , ship1
-                                       , ship2
-                                       , city
-                                       , state
-                                       , postal
-                                       , country
-                                       , email
-                                       , "" -- shipment
-                                       ]
+        showLineCSV [ "" -- order no.
+                    , shipName
+                    , company
+                    , ship1
+                    , ship2
+                    , city
+                    , state
+                    , postal
+                    , country
+                    , email
+                    , "" -- shipment
+                    ]
 
 
 recommended :: [Game] -> User -> [(Game, Int)]

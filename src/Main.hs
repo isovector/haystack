@@ -72,21 +72,20 @@ main =
          Just "commit" -> do update db CommitStage
                              putStrLn "updating user ownership with last ranking"
          Just "help"   -> doHelp
-         Just "server" -> doServer db
+         Just "server" -> doServer  db
          Just "rank"   -> doRanking db
-         Nothing       -> doServer db
+         Nothing       -> doServer  db
 
   where
       doHelp =
-          do putStrLn "usage: ./haystack [cmd]"
-             putStrLn ""
-             putStrLn "Haystack is a game ranking platform for Gamebox Monthly."
-             putStrLn ""
-             putStrLn "optional arguments:"
-             putStrLn "   help\t\tshow this help"
-             putStrLn "   commit\tconfirm that the last order sheet was sent"
-             putStrLn "   server\trun the web application"
-             putStrLn "   rank\t\toutput an order sheet to `order.csv`"
+          do mapM_ putStrLn [ "usage: ./haystack [cmd]\n"
+                            , "Haystack is a game ranking platform for Gamebox Monthly.\n"
+                            , "optional arguments:"
+                            , "   help\t\tshow this help"
+                            , "   commit\tconfirm that the last order sheet was sent"
+                            , "   server\trun the web application"
+                            , "   rank\t\toutput an order sheet to `order.csv`"
+                            ]
 
 
       doServer db =

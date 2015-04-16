@@ -16,6 +16,7 @@ module Haystack
     , isJust
     , mapM_
     , forM_
+    , for
     , sortBy
     ) where
 
@@ -34,5 +35,6 @@ import Control.Monad.IO.Class (liftIO)
 import Control.Monad (ap)
 import Data.Maybe (fromMaybe, isJust)
 import Data.Foldable (mapM_, forM_)
+import Data.Traversable (for)
 import Data.List (sortBy)
 
