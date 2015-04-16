@@ -3,10 +3,11 @@ module Haystack.Game where
 
 import Control.Monad (liftM2)
 import Data.Foldable (foldlM)
-import Data.Maybe    (catMaybes)
 import Data.Typeable
 import Utils         (pmap, partialLift)
 import CSV           (CSV, OfGames, asInt, asBool, asString, rows, column)
+
+import Haystack.Types
 
 
 data Game = Game { gameName :: String
@@ -36,7 +37,7 @@ data GamePref = GamePref { likesPopular :: Int
                          } deriving (Eq, Show, Read, Typeable)
 
 csvToGames :: CSV OfGames -> [Game]
-csvToGames csv = catMaybes . map toGame $ rows csv
+csvToGames csv = rights . map toGame $ rows csv
   where
       toGame row = do name      <- get asString "name"
                       inventory <- get asInt "inventory"

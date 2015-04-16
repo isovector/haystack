@@ -8,6 +8,7 @@ import Haystack.Game
 import Utils (unwrapPair)
 
 import CSV (CSV, OfUsers, OfOwner, OfPrefs, rowWhere, labels, column, asBool, asInt)
+import Haystack.Types
 
 
 data User = User { username :: String
@@ -19,10 +20,10 @@ recommended games u = sortBy (flip $ comparing snd)
                     . scoreGames (prefs u)
                     $ filter (flip notElem (owned u) . gameName) games
 
-getUserRow :: CSV a -> String -> Maybe [String]
+getUserRow :: CSV a -> String -> Try [String]
 getUserRow csv name = rowWhere csv "username" (name ==)
 
-getUser :: CSV OfUsers -> CSV OfPrefs -> CSV OfOwner -> String -> Maybe User
+getUser :: CSV OfUsers -> CSV OfPrefs -> CSV OfOwner -> String -> Try User
 getUser ucsv pcsv ocsv name =
     do popular  <- pget asInt "popular"
        gems     <- pget asInt "gems"
@@ -52,7 +53,7 @@ getUser ucsv pcsv ocsv name =
                         column pcsv col f row
 
 -- this is gnarly, but hey it works
-getOwnership :: CSV OfOwner -> String -> Maybe [String]
+getOwnership :: CSV OfOwner -> String -> Try [String]
 getOwnership csv name = do pairs <- sequence . map owns $ labels csv
                            return . map fst $ filter snd pairs
   where owns label = do row <- getUserRow csv name

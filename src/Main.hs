@@ -1,7 +1,8 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 module Main where
 
-import Prelude hiding (mapM_, forM_)
+import Prelude hiding (mapM_, forM_, concat)
+import Data.Foldable
 import Data.List (elemIndex)
 import Control.Monad.Writer (WriterT, tell, runWriterT)
 import Control.Monad.State (State, get, put, runState)
@@ -42,7 +43,7 @@ allocateGamesImpl ((user, (game, _)):ranks) =
                   return $ (user, game) : next
           else allocateGamesImpl ranks
 
-rankUsers :: CSV OfUsers -> CSV OfPrefs -> CSV OfOwner -> [Game] -> Maybe [(User, Game)]
+rankUsers :: CSV OfUsers -> CSV OfPrefs -> CSV OfOwner -> [Game] -> Try [(User, Game)]
 rankUsers csvUsers csvPrefs csvOwner games =
     do usernames <- columnVals csvUsers "username" asString
        users <- sequence $ map (getUser csvUsers csvPrefs csvOwner) usernames
@@ -62,9 +63,10 @@ main =
 
        let rankings = rankUsers csvUsers csvPrefs csvOwner games
 
-       mapM_ (
-           mapM_ (
-               \(u, g) -> putStrLn . show $ (username u, gameName g))) rankings
+       case rankings of
+         Right ranked ->
+           mapM_ (\(u, g) -> putStrLn . show $ (username u, gameName g)) ranked
+         Left problem -> putStrLn . show $ problem
 
        {-let user = getUser csvUsers csvPrefs csvOwner "sheehanna"-}
            {-recs = fmap (recommended games) user-}

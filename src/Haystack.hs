@@ -2,6 +2,7 @@ module Haystack
     ( module Haystack
     , module Haystack.Database
     , module Haystack.Game
+    , module Haystack.Types
     , module Haystack.User
     , module Happstack.Server
     , module Data.Acid
@@ -21,6 +22,7 @@ import Prelude hiding (forM_, mapM_)
 
 import Haystack.Database
 import Haystack.Game
+import Haystack.Types
 import Haystack.User
 import Happstack.Server
 import Data.Acid
@@ -32,6 +34,4 @@ import Control.Monad (ap)
 import Data.Maybe (fromMaybe, isJust)
 import Data.Foldable (mapM_, forM_)
 import Data.List (sortBy)
-
-type Try = Either String
 
