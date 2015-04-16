@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveDataTypeable, RecordWildCards #-}
 module Haystack.User where
 
 import Data.List ((\\), sortBy)
@@ -7,13 +7,40 @@ import Data.Typeable
 import Haystack.Game
 import Utils (unwrapPair)
 
-import CSV (CSV, OfUsers, OfOwner, OfPrefs, rowWhere, labels, column, asBool, asInt)
+import CSV (CSV, OfUsers, OfOwner, OfPrefs, rowWhere, labels, column, asBool, asInt, asString)
 import Haystack.Types
 
+data ShipAddr = ShipAddr { shipName :: String
+                         , company :: String
+                         , ship1 :: String
+                         , ship2 :: String
+                         , city :: String
+                         , state :: String
+                         , postal :: String
+                         , country :: String
+                         , email :: String
+                         } deriving (Eq, Typeable, Show)
 
 data User = User { username :: String
                  , prefs :: GamePref
-                 , owned :: [String] } deriving (Eq, Show, Typeable)
+                 , address :: ShipAddr
+                 , owned :: [String] } deriving (Eq, Typeable)
+
+instance Show User where
+    show (User { address = ShipAddr { .. }, .. }) =
+        concat $ map ((++ ",") . show) [ "" -- order no.
+                                       , shipName
+                                       , company
+                                       , ship1
+                                       , ship2
+                                       , city
+                                       , state
+                                       , postal
+                                       , country
+                                       , email
+                                       , "" -- shipment
+                                       ]
+
 
 recommended :: [Game] -> User -> [(Game, Int)]
 recommended games u = sortBy (flip $ comparing snd)
@@ -25,18 +52,39 @@ getUserRow csv name = rowWhere csv "username" (name ==)
 
 getUser :: CSV OfUsers -> CSV OfPrefs -> CSV OfOwner -> String -> Try User
 getUser ucsv pcsv ocsv name =
-    do popular  <- pget asInt "popular"
-       gems     <- pget asInt "gems"
-       new      <- pget asInt "new"
-       family   <- pget asInt "family"
-       party    <- pget asInt "party"
-       abstract <- pget asInt "abstract"
-       strategy <- pget asInt "strategy"
-       player2  <- pget asInt "player2"
-       player3  <- pget asInt "player3"
-       owned    <- getOwnership ocsv name
+    do popular      <- pget asInt "popular"
+       gems         <- pget asInt "gems"
+       new          <- pget asInt "new"
+       family       <- pget asInt "family"
+       party        <- pget asInt "party"
+       abstract     <- pget asInt "abstract"
+       strategy     <- pget asInt "strategy"
+       player2      <- pget asInt "player2"
+       player3      <- pget asInt "player3"
+       owned        <- getOwnership ocsv name
+
+       addrShipName <- uget asString "shipName"
+       addrCompany  <- uget asString "company"
+       addrShip1    <- uget asString "ship1"
+       addrShip2    <- uget asString "ship2"
+       addrCity     <- uget asString "city"
+       addrState    <- uget asString "state"
+       addrPostal   <- uget asString "postal"
+       addrCountry  <- uget asString "country"
+       addrEmail    <- uget asString "email"
+
        return User { username = name
                    , owned = owned
+                   , address = ShipAddr { shipName = addrShipName
+                                        , company  = addrCompany
+                                        , ship1    = addrShip1
+                                        , ship2    = addrShip2
+                                        , city     = addrCity
+                                        , state    = addrState
+                                        , postal   = addrPostal
+                                        , country  = addrCountry
+                                        , email    = addrEmail
+                                        }
                    , prefs = GamePref { likesPopular    = popular
                                       , likesNewRelease = new
                                       , likesForgotten  = gems

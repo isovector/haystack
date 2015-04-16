@@ -3,7 +3,7 @@ module Main where
 
 import Prelude hiding (mapM_, forM_, concat)
 import Data.Foldable
-import Data.List (elemIndex)
+import Data.List (elemIndex, (\\))
 import Control.Monad.Writer (WriterT, tell, runWriterT)
 import Control.Monad.State (State, get, put, runState)
 import Control.Monad.Reader (runReaderT)
@@ -49,7 +49,11 @@ rankUsers csvUsers csvPrefs csvOwner games =
        users <- sequence $ map (getUser csvUsers csvPrefs csvOwner) usernames
        let rankings = into . zip users $ map (recommended games) users
            ranked   = sortBy (flip $ comparing (snd . snd)) rankings
-       return $ allocateGames games ranked
+           allocated = allocateGames games ranked
+
+       if length allocated == length users
+          then return allocated
+          else throwError . NoGames . map username $ (users \\ (map fst allocated))
   where into x = concat $ map (\(a, bs) -> map ((,) a) bs) x
 
 
@@ -65,12 +69,8 @@ main =
 
        case rankings of
          Right ranked ->
-           mapM_ (\(u, g) -> putStrLn . show $ (username u, gameName g)) ranked
+           mapM_ (\(u, g) -> putStrLn (show u ++ (show $ gameName g))) ranked
          Left problem -> putStrLn . show $ problem
-
-       {-let user = getUser csvUsers csvPrefs csvOwner "sheehanna"-}
-           {-recs = fmap (recommended games) user-}
-           {-done = fmap (fmap (\x -> (gameName (fst x), snd x))) recs-}
 
        -- update database (AddGame twister)
        -- update database (AddGame bsgtbg)

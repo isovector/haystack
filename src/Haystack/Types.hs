@@ -14,6 +14,7 @@ import Data.Foldable
 data HaystackError = ParseError String
                    | MissingColumn String
                    | MissingRow String
+                   | NoGames [String]
                    | OtherError String deriving (Eq, Show)
 
 type Try = Either HaystackError

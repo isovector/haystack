@@ -19,6 +19,7 @@ $(deriveSafeCopy 0 'base ''Game)     -- '
 $(deriveSafeCopy 0 'base ''GameData) -- '
 $(deriveSafeCopy 0 'base ''GamePref) -- '
 $(deriveSafeCopy 0 'base ''User)     -- '
+$(deriveSafeCopy 0 'base ''ShipAddr) -- '
 
 type App = ReaderT (AcidState Database) (ServerPartT IO)
 
