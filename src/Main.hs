@@ -64,6 +64,11 @@ rankUsers csvUsers csvPrefs csvOwner owned games =
           else throwError . NoGames . map username $ (users \\ (map fst allocated))
   where into x = concat $ map (\(a, bs) -> map ((,) a) bs) x
 
+serverConfig :: Conf
+serverConfig = Conf { port      = 80
+                    , validator = Nothing
+                    }
+
 main :: IO ()
 main =
     do cmd <- headMay <$> getArgs
@@ -91,7 +96,7 @@ main =
 
       doServer db =
           do putStrLn "running haystack web application on port 80"
-             simpleHTTP nullConf $ do
+             simpleHTTP serverConfig $ do
                decodeBody (defaultBodyPolicy "/tmp/" 4096 4096 4096)
                runReaderT routes db
 
