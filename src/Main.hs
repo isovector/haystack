@@ -2,6 +2,7 @@
 module Main where
 
 import Prelude hiding (mapM_, forM_, concat, elem)
+import qualified Data.Map as Map
 import Data.Foldable
 import Data.List (elemIndex, (\\))
 import Control.Monad.Writer (WriterT, tell, runWriterT)
@@ -65,14 +66,13 @@ rankUsers csvUsers csvPrefs csvOwner owned games =
   where into x = concat $ map (\(a, bs) -> map ((,) a) bs) x
 
 serverConfig :: Conf
-serverConfig = Conf { port      = 80
-                    , validator = Nothing
-                    }
+serverConfig = nullConf { port      = 8080
+                        }
 
 main :: IO ()
 main =
     do cmd <- headMay <$> getArgs
-       db <- openLocalState $ Database [] [] []
+       db <- openLocalState $ Database [] [] Map.empty
 
        case cmd of
          Just "commit" -> do update db CommitStage

@@ -4,17 +4,20 @@ module Haystack.Database where
 import Control.Monad.Reader (ask, ReaderT)
 import Control.Monad.State  (get, put)
 import Data.Acid
+import Data.Map (Map)
+import qualified Data.Map as Map
 import Data.SafeCopy
 import Data.Typeable
 import Happstack.Server (ServerPartT)
 
 import Haystack.Game
+import Utils (showTrace)
 
 type Owned = (String, [String])
 
 
 data Database =
-    Database [Owned] [Owned] [(String, GamePref)] deriving (Typeable)
+    Database [Owned] [Owned] (Map (String, String) GamePref) deriving (Typeable)
 
 
 $(deriveSafeCopy 0 'base ''Database) -- '
@@ -42,11 +45,10 @@ stageOwner :: String -> String -> Update Database ()
 stageOwner u g = do Database owns staged prefs <- get
                     put $ Database owns ((u, [g]):staged) prefs
 
-setPrefs :: String -> GamePref -> Update Database ()
+setPrefs :: (String, String) -> GamePref -> Update Database ()
 setPrefs u p = do Database owns staged prefs <- get
                   put . Database owns staged
-                      . merge (flip const) prefs
-                      $ return (u, p)
+                      $ Map.insert u p prefs
 
 commitStage :: Update Database ()
 commitStage = do Database owns staged prefs <- get
@@ -60,9 +62,10 @@ getStage :: Query Database [Owned]
 getStage = do Database _ staged _ <- ask
               return staged
 
-getPrefs :: Query Database [(String, GamePref)]
-getPrefs = do Database _ _ prefs <- ask
-              return prefs
+getPrefs :: [(String, String)] -> Query Database [((String, String), GamePref)]
+getPrefs reqs =
+    do Database _ _ prefs <- ask
+       return . filter (flip elem reqs . fst) $ Map.assocs prefs
 
 $(makeAcidic ''Database [ 'clearStage
                         , 'stageOwner

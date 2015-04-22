@@ -3,13 +3,13 @@ module Haystack.Web.Preferences where
 
 import Prelude hiding (forM_, mapM_)
 
-import Debug.Trace (trace)
 import Control.Applicative ((<$>), optional)
-import Control.Monad (msum)
+import Control.Monad (msum, liftM2)
 import Control.Monad.Reader (ask, ReaderT)
+import Data.List.Split (splitOn)
+import Data.Map (Map)
+import qualified Data.Map as Map
 import Data.Maybe (fromMaybe)
-import Data.Text (Text)
-import Data.Text.Lazy (unpack)
 import Text.Blaze.Html5 (Html, (!), a, form, input, p, toHtml, label, option, select)
 import Text.Blaze.Html5.Attributes (action, enctype, href, name, size, type_, value)
 import qualified Text.Blaze.Html5 as H
@@ -31,20 +31,27 @@ prefMap = [ ("popular",  "Popular")
           , ("player3",  "3+ Player Games")
           ]
 
+row :: String -> Html -> Html
+row rowlabel contents =
+    H.tr $ do H.td ! A.style "text-align: right"
+                   $ label $ H.string (rowlabel ++ ":")
+              H.td contents
 
 prefTable :: Html
-prefTable = H.table $ do H.tr $ do H.td ! A.style "text-align: right"
-                                        $ label "Username:"
-                                   H.td $ input
-                                        ! type_ "input"
-                                        ! name "username"
-                         forM_ prefMap prefRow
+prefTable =
+    H.table $ do
+        row "Username" $ input ! type_ "input"
+                               ! name  "username"
+        row "Email" $ input ! type_ "input"
+                            ! name  "email"
+        forM_ prefMap prefRow
+
   where
-      prefRow (v, s) = H.tr $ do
-          H.td ! A.style "text-align: right" $ label $ H.string (s ++ ":")
-          H.td                               $ do "hate"
-                                                  mapM_ prefRadio [0..4]
-                                                  "love"
+      prefRow (v, s) =
+          row s $ do "hate"
+                     mapM_ prefRadio [0..4]
+                     "love"
+
         where prefRadio i = input
                           ! type_ "radio"
                           ! name (H.stringValue v)
@@ -72,11 +79,12 @@ prefPage = msum [ viewForm, processForm ]
           do method POST
              db <- ask
 
-             username <- unpack <$> lookText "username"
+             username <- look "username"
+             email    <- look "email"
              formData <- sequence $ map (runText . fst) prefMap
              let prefs = buildPref formData
 
-             liftIO $ update db (SetPrefs username prefs)
+             liftIO $ update db (SetPrefs (username, email) prefs)
 
              ok $ template "Preferences Saved" $ do
                  H.p "Your preferences have been saved!"
@@ -94,8 +102,8 @@ prefPage = msum [ viewForm, processForm ]
                    }
         where get x = fromMaybe 2 $ lookup x prefs
 
-      runText idx = do formVal <- optional $ lookText idx
-                       let rating = fmap (read . unpack) formVal
+      runText idx = do formVal <- optional $ look idx
+                       let rating = fmap read formVal
                        return (idx, fromMaybe 2 rating)
 
       printScores pref game =
@@ -105,8 +113,11 @@ prefPage = msum [ viewForm, processForm ]
               toHtml (show . score pref $ metadata game)
 
 servePrefs :: App Response
-servePrefs = do db <- ask
-                prefs <- liftIO $ query db GetPrefs
-                ok . serveCSV $ export prefs
-
+servePrefs =
+    do method GET
+       requests <- fmap (splitOn ":") <$> looks "requests"
+       let reqPairs = liftM2 (,) (!! 0) (!! 1) <$> filter ((2 ==) . length) requests
+       db <- ask
+       prefs <- liftIO $ query db (GetPrefs reqPairs)
+       ok . serveCSV . export $ prefs
 

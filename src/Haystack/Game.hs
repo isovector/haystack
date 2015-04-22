@@ -39,7 +39,7 @@ data GamePref = GamePref { likesPopular :: Int
                          } deriving (Eq, Show, Read, Typeable)
 
 
-export :: [(String, GamePref)] -> CSV OfPrefs
+export :: [((String, String), GamePref)] -> CSV OfPrefs
 export ps = toCSV [ "username"
                   , "popular"
                   , "gems"
@@ -52,18 +52,18 @@ export ps = toCSV [ "username"
                   , "player3"
                   ]
                   $ flip map ps (
-                      \(u, p) -> u : map (show . ($ p))
-                                   [ likesPopular
-                                   , likesNewRelease
-                                   , likesNewRelease
-                                   , likesForgotten
-                                   , likesFamily
-                                   , likesParty
-                                   , likesAbstract
-                                   , likesStrategy
-                                   , likes2Player
-                                   , likes3Player
-                                   ])
+                      \((u,_),p) -> u : map (show . ($ p))
+                                      [ likesPopular
+                                      , likesNewRelease
+                                      , likesNewRelease
+                                      , likesForgotten
+                                      , likesFamily
+                                      , likesParty
+                                      , likesAbstract
+                                      , likesStrategy
+                                      , likes2Player
+                                      , likes3Player
+                                      ])
 
 
 
