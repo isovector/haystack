@@ -27,23 +27,7 @@ data ShipAddr = ShipAddr { shipName :: String
 data User = User { username :: String
                  , prefs :: GamePref
                  , address :: ShipAddr
-                 , owned :: [String] } deriving (Eq, Typeable)
-
-instance Show User where
-    show (User { address = ShipAddr { .. }, .. }) =
-        showLineCSV [ "" -- order no.
-                    , shipName
-                    , company
-                    , ship1
-                    , ship2
-                    , city
-                    , state
-                    , postal
-                    , country
-                    , email
-                    , "" -- shipment
-                    ]
-
+                 , owned :: [String] } deriving (Eq, Typeable, Show)
 
 recommended :: [Game] -> User -> [(Game, Int)]
 recommended games u = sortBy (flip $ comparing snd)

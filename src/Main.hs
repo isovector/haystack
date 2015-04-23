@@ -111,6 +111,12 @@ main =
               Right ranked ->
                 do update db ClearStage
                    mapM_ (withRanking db) ranked
+                   writeFile "shipping.csv" . showCSV $ export ranked
+                   mapM_ putStrLn [ "everything went well!\n"
+                                  , "refer to `shipping.csv` for your shipping order\n"
+                                  , "run `./haystack commit` when you have sent the order"
+                                  , "  so we can keep track of who has what"
+                                  ]
 
               Left problem ->
                 do hPutStrLn stderr . show $ problem
@@ -119,6 +125,34 @@ main =
 
       withRanking db (u, g) =
           do let gn = gameName g
-             putStrLn (show u ++ (show gn))
              update db (StageOwner (username u) gn)
 
+      export ranks =
+          toCSV [ "Order Number"
+                , "Shipping Name"
+                , "Company"
+                , "Shipping Address 1"
+                , "Shipping Address 2"
+                , "Shipping City"
+                , "Shipping State"
+                , "Shipping Postal Code"
+                , "Shipping Country"
+                , "Email (optional)"
+                , "Shipment"
+                , "Contents"
+                ]
+                $ flip map ranks (
+                    \(u, g) -> map ($ address u)
+                        [ const "" -- order no
+                        , shipName
+                        , company
+                        , ship1
+                        , ship2
+                        , city
+                        , state
+                        , postal
+                        , country
+                        , email
+                        , const "" -- shipment
+                        , const $ gameName g
+                        ])
