@@ -17,7 +17,7 @@ type Owned = (String, [String])
 
 
 data Database =
-    Database [Owned] [Owned] (Map (String, String) GamePref) deriving (Typeable)
+    Database [Owned] (Map (String, String) GamePref) deriving (Typeable)
 
 
 $(deriveSafeCopy 0 'base ''Database) -- '
@@ -36,41 +36,25 @@ merge f xs ys = merge' xs ys []
             Just x  -> (k, f x y)
             Nothing -> (k, y)) : merge' xs ys ws
 
-
-clearStage :: Update Database ()
-clearStage = do Database owns _ prefs <- get
-                put $ Database owns [] prefs
-
-stageOwner :: String -> String -> Update Database ()
-stageOwner u g = do Database owns staged prefs <- get
-                    put $ Database owns ((u, [g]):staged) prefs
-
 setPrefs :: (String, String) -> GamePref -> Update Database ()
-setPrefs u p = do Database owns staged prefs <- get
-                  put . Database owns staged
+setPrefs u p = do Database owns prefs <- get
+                  put . Database owns
                       $ Map.insert u p prefs
 
 commitStage :: Update Database ()
-commitStage = do Database owns staged prefs <- get
-                 put $ Database (merge (++) owns staged) [] prefs
+commitStage = do Database owns prefs <- get
+                 put $ Database owns prefs
 
 getOwned :: Query Database [Owned]
-getOwned = do Database owns _ _ <- ask
+getOwned = do Database owns _ <- ask
               return owns
-
-getStage :: Query Database [Owned]
-getStage = do Database _ staged _ <- ask
-              return staged
 
 getPrefs :: [(String, String)] -> Query Database [((String, String), GamePref)]
 getPrefs reqs =
-    do Database _ _ prefs <- ask
+    do Database _ prefs <- ask
        return . filter (flip elem reqs . fst) $ Map.assocs prefs
 
-$(makeAcidic ''Database [ 'clearStage
-                        , 'stageOwner
-                        , 'commitStage
-                        , 'getStage
+$(makeAcidic ''Database [ 'commitStage
                         , 'getOwned
                         , 'getPrefs
                         , 'setPrefs])

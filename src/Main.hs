@@ -72,11 +72,10 @@ serverConfig = nullConf { port      = 8080
 main :: IO ()
 main =
     do cmd <- headMay <$> getArgs
-       db <- openLocalState $ Database [] [] Map.empty
+       db <- openLocalState $ Database [] Map.empty
 
        case cmd of
-         Just "commit" -> do update db CommitStage
-                             putStrLn "updating user ownership with last ranking"
+         Just "commit" -> doCommit db
          Just "help"   -> doHelp
          Just "server" -> doServer  db
          Just "rank"   -> doRanking db
@@ -109,9 +108,7 @@ main =
             owned <- query db GetOwned
             case rankUsers csvUsers csvPrefs csvOwner owned games of
               Right ranked ->
-                do update db ClearStage
-                   mapM_ (withRanking db) ranked
-                   writeFile "shipping.csv" . showCSV $ export ranked
+                do writeFile "shipping.csv" . showCSV $ export ranked
                    mapM_ putStrLn [ "everything went well!\n"
                                   , "refer to `shipping.csv` for your shipping order\n"
                                   , "run `./haystack commit` when you have sent the order"
@@ -122,10 +119,19 @@ main =
                 do hPutStrLn stderr . show $ problem
                    exitWith $ ExitFailure 1
 
+      doCommit db =
+         do csvUsers <- parseCSV <$> readFile "users.csv"
+            csvGames <- parseCSV <$> readFile "games.csv"
+            csvShips <- parseCSV <$> readFile "shipping.csv"
+            return ()
+            -- TODO: still working on this, we want it to xref
+            -- between the shipping file to figure out what
+            -- has been sent
 
-      withRanking db (u, g) =
-          do let gn = gameName g
-             update db (StageOwner (username u) gn)
+      toCommit csvShips = shipCol ""
+        where
+            shipCol = flip (column csvShips) asString
+
 
       export ranks =
           toCSV [ "Order Number"

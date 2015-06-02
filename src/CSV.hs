@@ -12,6 +12,7 @@ data OfGames = OfGames
 data OfUsers = OfUsers
 data OfOwner = OfOwner
 data OfPrefs = OfPrefs
+data OfShips = OfShips
 data CSV a = CSV { labels :: [String]
                  , rows :: [[String]]
                  }
