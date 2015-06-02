@@ -44,7 +44,7 @@ toCSV labels rows = CSV { labels = labels
                         }
 
 parseCSV :: String -> CSV a
-parseCSV input = CSV { labels = labels, rows = rows }
+parseCSV input = CSV { labels = labels, rows = filter ((== length labels) . length) rows }
   where fileLines = case parse csvFile "(unknown)" input of
                       Left l  -> [[],[]]
                       Right r -> r
